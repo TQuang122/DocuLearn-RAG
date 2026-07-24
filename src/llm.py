@@ -1,63 +1,42 @@
-from functools import lru_cache
-from typing import Any, Literal
+"""LLM invocation through Gemini API (google-genai)."""
 
-from langchain_core.messages import HumanMessage
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
+from __future__ import annotations
 
-from config import settings
+from contextvars import ContextVar
+
+from google import genai
+from google.genai import types
+
+from src.config import settings
+
+_runtime_api_key: ContextVar[str | None] = ContextVar("runtime_gemini_api_key", default=None)
 
 
+def set_runtime_gemini_api_key(api_key: str | None) -> None:
+    _runtime_api_key.set(api_key.strip() if isinstance(api_key, str) else None)
 
-def _build_hf_local():
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-    from langchain_huggingface import ChatHuggingFace, HuggingFacePipeline
 
-    tokenizer = AutoTokenizer.from_pretrained(settings.hf_model)
-    model = AutoModelForCausalLM.from_pretrained(settings.hf_model, dtype=torch.bfloat16)
+def invoke_llm(prompt: str) -> str:
+    """Invoke the configured chat model and return plain text.
 
-    text_gen = pipeline(
-        task="text-generation",
-        model=model,
-        tokenizer=tokenizer,
-        device=settings.hf_device,
-        return_full_text=False,
+    Args: prompt.
+    Returns: assistant text content.
+    Raises: RuntimeError if the API key is missing or response is empty.
+    """
+    api_key = _runtime_api_key.get() or settings.gemini_api_key
+    if not api_key:
+        raise RuntimeError("Missing Gemini API key. Provide it in the UI or set GEMINI_API_KEY.")
+
+    client = genai.Client(api_key=api_key)
+    resp = client.models.generate_content(
+        model=settings.llm_model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=settings.llm_temperature,
+            max_output_tokens=settings.llm_max_new_tokens,
+        ),
     )
-    text_gen.generation_config.max_new_tokens = settings.hf_max_new_tokens
-    text_gen.generation_config.do_sample = settings.llm_temperature > 0
-
-    return ChatHuggingFace(llm=HuggingFacePipeline(pipeline=text_gen))
-
-def _build_gemini():
-    return ChatGoogleGenerativeAI(
-        model=settings.gemini_model,
-        temperature=settings.llm_temperature,
-        google_api_key=settings.google_api_key,
-    )
-
-def _build_vllm():
-    return ChatOpenAI(
-        model=settings.hf_model,
-        openai_api_key=settings.vllm_api_key,
-        openai_api_base=settings.vllm_api_base,
-        temperature=settings.llm_temperature,
-    )
-    
-@lru_cache(maxsize=4)
-def get_llm(provider=None):
-    provider = provider or settings.llm_provider
-
-    if provider == "hf_local":
-        return _build_hf_local()
-    if provider == "gemini":
-        return _build_gemini()
-    if provider == "vllm":
-        return _build_vllm()
-
-    raise ValueError(f"Unknown llm_provider '{provider}'")
-
-def invoke_llm(prompt, provider=None):
-    response = get_llm(provider=provider).invoke([HumanMessage(content=prompt)])
-    return response.content if isinstance(response.content, str) else str(response.content)
+    text = (resp.text or "").strip()
+    if not text:
+        raise RuntimeError("Empty response from Gemini.")
+    return text

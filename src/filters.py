@@ -1,120 +1,87 @@
-from typing import Any
+"""Shared metadata filtering utilities across the app."""
 
-from pydantic import BaseModel, field_validator, model_validator
-from qdrant_client import models as qmodels
+from __future__ import annotations
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from qdrant_client.http import models as qmodels
 
 
 class MetadataFilter(BaseModel):
+    """Filter applied against indexed chunk metadata."""
+
+    model_config = ConfigDict(extra="forbid")
+
     filename: str | None = None
     filenames: list[str] | None = None
-    page: int | None = None
+    page: int | None = Field(default=None, ge=1)
     section: str | None = None
     document_id: str | None = None
 
-    @field_validator("page")
-    @classmethod
-    def validate_page(cls, value: int | None) -> int | None:
-        if value is not None and value < 1:
-            raise ValueError("page must be greater than or equal to 1.")
-
-        return value
-
     @model_validator(mode="after")
-    def normalize(self) -> "MetadataFilter":
-        # Chuẩn hóa filename đơn.
+    def _normalize(self) -> MetadataFilter:
+        names = [x for x in (self.filenames or []) if isinstance(x, str) and x.strip()]
+        names = [n.strip() for n in names if n.strip()]
+        if not names:
+            self.filenames = None
+        elif len(names) == 1:
+            self.filename, self.filenames = names[0], None
+        else:
+            # Multi-doc selection: page filter becomes ambiguous, so drop it.
+            self.filename, self.filenames, self.page = None, names, None
         if self.filename is not None:
             self.filename = self.filename.strip() or None
-
-        # Chuẩn hóa danh sách filename.
-        normalized_names = [
-            name.strip()
-            for name in (self.filenames or [])
-            if isinstance(name, str) and name.strip()
-        ]
-
-        # Loại bỏ tên trùng nhưng vẫn giữ nguyên thứ tự.
-        normalized_names = list(dict.fromkeys(normalized_names))
-
-        # Nếu cả filename và filenames cùng được cung cấp,
-        # đưa tất cả về filenames.
-        if self.filename is not None:
-            normalized_names.insert(0, self.filename)
-            normalized_names = list(dict.fromkeys(normalized_names))
-
-        if not normalized_names:
-            self.filename = None
-            self.filenames = None
-        elif len(normalized_names) == 1:
-            self.filename = normalized_names[0]
-            self.filenames = None
-        else:
-            self.filename = None
-            self.filenames = normalized_names
-
         if self.section is not None:
             self.section = self.section.strip() or None
-
         if self.document_id is not None:
             self.document_id = self.document_id.strip() or None
-
         return self
 
 
-def coerce_filter(
-    filters: MetadataFilter | dict[str, Any] | None,
-) -> MetadataFilter | None:
+def coerce_filter(filters: MetadataFilter | dict[str, object] | None) -> MetadataFilter | None:
+    """Coerce a dict (or None) into a normalized `MetadataFilter`."""
     if filters is None:
         return None
-
     if isinstance(filters, MetadataFilter):
         return filters
-
     if isinstance(filters, dict):
         return MetadataFilter.model_validate(filters)
-
-    raise TypeError(
-        "filters must be MetadataFilter, dict, or None."
-    )
+    raise TypeError(f"Unsupported filters type: {type(filters).__name__}")
 
 
-def filters_to_dict(
-    filters: MetadataFilter | dict[str, Any] | None,
-) -> dict[str, Any] | None:
-    normalized_filter = coerce_filter(filters)
+def filters_to_dict(filters: MetadataFilter | dict[str, object] | None) -> dict[str, object] | None:
+    """Return normalized flat dict suitable for downstream filtering."""
+    f = coerce_filter(filters)
+    if f is None:
+        return None
+    return f.model_dump(exclude_none=True) or None
 
-    if normalized_filter is None:
+
+def filters_to_qdrant(filters: MetadataFilter | dict[str, object] | None) -> qmodels.Filter | None:
+    """Build a Qdrant filter from normalized metadata filters."""
+    flat = filters_to_dict(filters)
+    if not flat:
         return None
 
-    result = normalized_filter.model_dump(exclude_none=True)
-
-    return result or None
-
-
-def filters_to_qdrant(
-    filters: MetadataFilter | dict[str, Any] | None,
-) -> qmodels.Filter | None:
-    flat_filter = filters_to_dict(filters)
-
-    if not flat_filter:
-        return None
-
-    conditions: list[qmodels.FieldCondition] = []
-
-    for field_name, value in flat_filter.items():
-        if field_name == "filenames":
-            conditions.append(
-                qmodels.FieldCondition(
-                    key="metadata.filename",
-                    match=qmodels.MatchAny(any=value),
-                )
-            )
+    conditions: list[qmodels.Condition] = []
+    for field, value in flat.items():
+        if value is None:
             continue
 
-        conditions.append(
-            qmodels.FieldCondition(
-                key=f"metadata.{field_name}",
-                match=qmodels.MatchValue(value=value),
-            )
-        )
+        if field == "filenames" and isinstance(value, list):
+            names = [x for x in value if isinstance(x, str) and x]
+            if names:
+                conditions.append(
+                    qmodels.FieldCondition(
+                        key="metadata.filename", match=qmodels.MatchAny(any=names)
+                    )
+                )
+            continue
 
-    return qmodels.Filter(must=conditions)
+        if isinstance(value, (str, int)):
+            conditions.append(
+                qmodels.FieldCondition(
+                    key=f"metadata.{field}", match=qmodels.MatchValue(value=value)
+                )
+            )
+
+    return qmodels.Filter(must=conditions) if conditions else None

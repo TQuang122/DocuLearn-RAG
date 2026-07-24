@@ -1,122 +1,67 @@
+"""Retrieval, prompts, citations, and grounded answers."""
+
+from __future__ import annotations
+
 from functools import lru_cache
-from typing import Any
+from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
-from pydantic import ValidationError
 
-from config import settings
-from schemas import (
-    ChunkMetadata,
-    Citation,
-    RagAnswer,
-    RetrievedChunk,
-)
+from src.config import settings
+from src.filters import filters_to_qdrant
+from src.llm import invoke_llm
+from src.schemas import ChunkMetadata, Citation, RagAnswer, RetrievedChunk
+from src.store import get_vector_store, scroll_all
+
+PROMPTS_DIR = Path(__file__).parent / "prompts"
+ANSWER_TEMPLATE = "answer.jinja2"
 
 
 def retrieve(
     query: str,
     k: int | None = None,
-    filters: Any = None,
+    filters: dict[str, object] | None = None,
     collection_name: str | None = None,
 ) -> list[RetrievedChunk]:
-    query = query.strip()
-
-    if not query:
-        raise ValueError("query cannot be empty.")
-
-    resolved_k = settings.top_k if k is None else k
-
-    if resolved_k <= 0:
-        raise ValueError("k must be greater than 0.")
-
-    hits = get_vector_store(
-        collection_name=collection_name
-    ).similarity_search_with_score(
+    store = get_vector_store(collection_name=collection_name)
+    hits = store.similarity_search_with_score(
         query=query,
-        k=resolved_k,
+        k=k or settings.top_k,
         filter=filters_to_qdrant(filters),
     )
-
-    results: list[RetrievedChunk] = []
-
-    for document, score in hits:
-        metadata = ChunkMetadata.model_validate(
-            document.metadata
+    return [
+        RetrievedChunk(
+            text=doc.page_content,
+            score=float(score),
+            metadata=ChunkMetadata(**doc.metadata),
         )
-
-        results.append(
-            RetrievedChunk(
-                text=document.page_content,
-                score=float(score),
-                metadata=metadata,
-            )
-        )
-
-    return results
-
-
-def _chunk_index(chunk_id: str) -> int:
-    try:
-        return int(chunk_id.rsplit(":", 1)[-1])
-    except (TypeError, ValueError):
-        # Đẩy chunk có ID không hợp lệ xuống cuối.
-        return 2**31 - 1
+        for doc, score in hits
+    ]
 
 
 def fetch_all_chunks(
-    filters: Any = None,
+    filters: dict[str, object] | None = None,
     collection_name: str | None = None,
 ) -> list[RetrievedChunk]:
+    """Scroll every chunk matching the filter, ordered by filename → page → index."""
     name = collection_name or settings.qdrant_collection
-    qdrant_filter = filters_to_qdrant(filters)
-
     results: list[RetrievedChunk] = []
-
-    for points in scroll_all(
-        name,
-        scroll_filter=qdrant_filter,
-    ):
-        for point in points:
+    for page in scroll_all(name, scroll_filter=filters_to_qdrant(filters)):
+        for point in page:
             payload = point.payload or {}
-
-            metadata_payload = payload.get("metadata")
-            text_payload = payload.get("page_content")
-
-            if not isinstance(metadata_payload, dict):
+            meta = payload.get("metadata") or {}
+            text = payload.get("page_content") or ""
+            if not meta or not text:
                 continue
-
-            if not isinstance(text_payload, str):
-                continue
-
-            text = text_payload.strip()
-
-            if not text:
-                continue
-
-            try:
-                metadata = ChunkMetadata.model_validate(
-                    metadata_payload
-                )
-            except ValidationError:
-                # Nên log dữ liệu lỗi trong ứng dụng thực tế.
-                continue
-
-            results.append(
-                RetrievedChunk(
-                    text=text,
-                    score=0.0,
-                    metadata=metadata,
-                )
-            )
-
-    return sorted(
-        results,
-        key=lambda result: (
-            result.metadata.filename.casefold(),
-            result.metadata.page,
-            _chunk_index(result.metadata.chunk_id),
-        ),
+            results.append(RetrievedChunk(text=text, score=0.0, metadata=ChunkMetadata(**meta)))
+    results.sort(
+        key=lambda r: (
+            r.metadata.filename,
+            r.metadata.page,
+            int(r.metadata.chunk_id.rsplit(":", 1)[-1]),
+        )
     )
+    return results
 
 
 @lru_cache(maxsize=1)
@@ -130,89 +75,45 @@ def _jinja_env() -> Environment:
     )
 
 
-def render_prompt(
-    template_name: str,
-    **context: Any,
-) -> str:
-    return (
-        _jinja_env()
-        .get_template(template_name)
-        .render(**context)
-    )
+def render_prompt(template_name: str, **context: object) -> str:
+    """Render an arbitrary Jinja template from the prompts directory."""
+    return _jinja_env().get_template(template_name).render(**context)
 
 
-def format_citations(
-    chunks: list[RetrievedChunk],
-) -> list[Citation]:
+def format_citations(chunks: list[RetrievedChunk]) -> list[Citation]:
     return [
         Citation(
-            source_index=index,
-            source_marker=f"S{index}",
-            filename=chunk.metadata.filename,
-            page=chunk.metadata.page,
-            section=chunk.metadata.section,
-            chunk_id=chunk.metadata.chunk_id,
+            source_index=i,
+            source_marker=f"S{i}",
+            filename=c.metadata.filename,
+            page=c.metadata.page,
+            source_text=c.text.strip(),
+            section=c.metadata.section,
+            chunk_id=c.metadata.chunk_id,
         )
-        for index, chunk in enumerate(
-            chunks,
-            start=1,
-        )
+        for i, c in enumerate(chunks, start=1)
     ]
 
 
 def answer(
     question: str,
     k: int | None = None,
-    filters: Any = None,
+    filters: dict[str, object] | None = None,
     collection_name: str | None = None,
 ) -> RagAnswer:
-    question = question.strip()
-
-    if not question:
-        raise ValueError("question cannot be empty.")
-
-    chunks = retrieve(
-        query=question,
-        k=k,
-        filters=filters,
-        collection_name=collection_name,
-    )
-
+    chunks = retrieve(question, k=k, filters=filters, collection_name=collection_name)
     if not chunks:
         return RagAnswer(
             question=question,
-            answer=(
-                "Tôi không có đủ thông tin trong ngữ cảnh "
-                "được cung cấp để trả lời."
-            ),
-            citations=[],
-            chunks=[],
+            answer="Tôi không có đủ thông tin trong ngữ cảnh được cung cấp để trả lời.",
         )
 
-    prompt = render_prompt(
-        ANSWER_TEMPLATE,
-        question=question,
-        chunks=chunks,
-    )
-
-    response = invoke_llm(prompt)
-
-    if not isinstance(response, str):
-        raise TypeError(
-            "invoke_llm() must return a string."
-        )
-
-    answer_text = response.strip()
-
-    if not answer_text:
-        answer_text = (
-            "Tôi không có đủ thông tin trong ngữ cảnh "
-            "được cung cấp để trả lời."
-        )
+    prompt = render_prompt(ANSWER_TEMPLATE, question=question, chunks=chunks)
+    text = invoke_llm(prompt)
 
     return RagAnswer(
         question=question,
-        answer=answer_text,
+        answer=text.strip(),
         citations=format_citations(chunks),
         chunks=chunks,
     )

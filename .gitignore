@@ -10,8 +10,41 @@ wheels/
 .venv
 
 .env
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+storage/
+exports/
+evaluation-results/
 
 # General
 .DS_Store
 .AppleDouble
 .LSOverride
+DESIGN.md
+.omo/
+
+# Notebook
+.ipynb_checkpoints/
+
+# Type-checker caches
+.mypy_cache/
+.pyright/
+.basedpyright/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Coverage reports
+coverage.xml
+.coverage.*
+
+# Gradio runtime artifacts
+flagged/
+gradio_cached_examples/
+
+data/*.pdf
+data/**/*.pdf

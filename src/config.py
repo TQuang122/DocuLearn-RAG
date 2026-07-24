@@ -1,75 +1,79 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_PROJECT_ROOT / ".env",
         env_prefix="RAG_",
         extra="ignore",
     )
 
-    # Paths and vector database
     data_dir: Path = Path("data")
     storage_dir: Path = Path("storage/qdrant")
+    export_dir: Path = Path("exports")
     qdrant_collection: str = "rag_chunks"
+    max_upload_bytes: int = Field(default=25 * 1024 * 1024, ge=1024)
 
-    # Chunking and retrieval
-    chunk_size: int = Field(default=1000, ge=100)
-    chunk_overlap: int = Field(default=150, ge=0)
+    chunk_size: int = Field(default=1500, ge=500)
+    chunk_overlap: int = Field(default=200, ge=0)
     top_k: int = Field(default=5, ge=1, le=64)
 
-    # Embedding and LLM
-    embedding_model: str = (
-        "GreenNode/GreenNode-Embedding-Large-VN-Mixed-V1"
-    )
-
-    llm_provider: Literal["hf_local", "gemini", "vllm"] = "hf_local"
+    llm_provider: Literal["gemini"] = "gemini"
+    llm_model: str = "gemini-flash-lite-latest"
     llm_temperature: float = Field(default=0.1, ge=0.0, le=2.0)
+    llm_max_new_tokens: int = Field(default=10000, ge=1, le=20000)
 
-    # Hugging Face
-    hf_device: Literal["mps", "cuda", "cpu"] = "mps"
-    hf_max_new_tokens: int = Field(default=2048, ge=1)
+    embedding_provider: Literal["local"] = "local"
+    embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-    # Gemini
-    gemini_model: str = "gemini-3.5-flash"
-    google_api_key: str | None = Field(
-        default=None,
-        validation_alias="GOOGLE_API_KEY",
-    )
+    gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
+    api_key: str | None = None
+    gradio_username: str | None = None
+    gradio_password: str | None = None
+    server_name: str = "127.0.0.1"
+    server_port: int = Field(default=7860, ge=1, le=65535)
 
-    # vLLM
-    vllm_api_base: str = "http://localhost:8001/v1"
-    vllm_api_key: str = "EMPTY"
-
-    # Summarization and generation
     summarize_batch_size: int = Field(default=10, ge=1)
     summarize_retrieval_k: int = Field(default=12, ge=1, le=128)
     generation_retrieval_k: int = Field(default=16, ge=1, le=128)
-
-    # Learning materials
     quiz_default_count: int = Field(default=8, ge=1, le=50)
     flashcards_default_count: int = Field(default=15, ge=1, le=100)
 
-    # API
-    api_url: str = "http://localhost:8000"
+    @field_validator(
+        "gemini_api_key",
+        "api_key",
+        "gradio_username",
+        "gradio_password",
+        mode="before",
+    )
+    @classmethod
+    def normalize_blank_secrets(cls, value: object) -> object:
+        """Treat blank optional credentials as disabled configuration."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @model_validator(mode="after")
-    def validate_config(self) -> "Settings":
+    def validate_config(self) -> Settings:
         if self.chunk_overlap >= self.chunk_size:
+            raise ValueError("chunk_overlap must be smaller than chunk_size.")
+        if bool(self.gradio_username) != bool(self.gradio_password):
             raise ValueError(
-                "chunk_overlap must be smaller than chunk_size."
+                "RAG_GRADIO_USERNAME and RAG_GRADIO_PASSWORD must be configured together."
             )
-
-        if self.llm_provider == "gemini" and not self.google_api_key:
-            raise ValueError(
-                "GOOGLE_API_KEY is required when "
-                "llm_provider='gemini'."
-            )
+        for field_name in ("data_dir", "storage_dir", "export_dir"):
+            path = getattr(self, field_name)
+            if not path.is_absolute():
+                object.__setattr__(self, field_name, _PROJECT_ROOT / path)
 
         return self
 
