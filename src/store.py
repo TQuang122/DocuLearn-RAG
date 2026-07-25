@@ -58,6 +58,25 @@ def delete_old_document_versions(
     )
 
 
+def delete_document_by_filename(filename: str, collection_name: str | None = None) -> None:
+    """Delete all vectors for a given filename from Qdrant."""
+    name = collection_name or settings.qdrant_collection
+    get_client().delete(
+        collection_name=name,
+        points_selector=qmodels.FilterSelector(
+            filter=qmodels.Filter(
+                must=[
+                    qmodels.FieldCondition(
+                        key="metadata.filename",
+                        match=qmodels.MatchValue(value=filename),
+                    )
+                ],
+            )
+        ),
+        wait=True,
+    )
+
+
 def close_client() -> None:
     if get_client.cache_info().currsize == 0:
         return
