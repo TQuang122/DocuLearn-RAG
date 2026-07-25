@@ -62,7 +62,7 @@ def _details_block(summary: str, content: str) -> str:
 def _citation_source_text_block(c: Citation) -> str:
     if not c.source_text:
         return ""
-    return "\n  " + _details_block("Xem đoạn nguồn", c.source_text)
+    return "\n  " + _details_block("View source passage", c.source_text)
 
 
 def _marker_details(citations: list[Citation], markers: list[str]) -> list[str]:

@@ -105,7 +105,7 @@ def answer(
     if not chunks:
         return RagAnswer(
             question=question,
-            answer="Tôi không có đủ thông tin trong ngữ cảnh được cung cấp để trả lời.",
+            answer="I don't have enough information in the provided context to answer.",
         )
 
     prompt = render_prompt(ANSWER_TEMPLATE, question=question, chunks=chunks)

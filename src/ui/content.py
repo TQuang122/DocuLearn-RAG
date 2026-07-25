@@ -18,9 +18,9 @@ BRAND_HEADER_HTML = """
 <section class="hero-shell">
   <div class="hero-copy">
     <div class="eyebrow">Document intelligence workspace</div>
-    <h1>Học sâu hơn từ<br> <span>tài liệu của bạn.</span></h1>
-    <p>Biến PDF thành một không gian học có dẫn nguồn — hỏi đáp, tóm tắt,
-    quiz và flashcards trên cùng một luồng làm việc.</p>
+    <h1>Learn deeper from<br> <span>your documents.</span></h1>
+    <p>Turn your PDFs into a sourced learning space — Q&A, summaries,
+    quizzes, and flashcards in one workflow.</p>
   </div>
   <div class="hero-visual" aria-hidden="true">
     <div class="document-orbit orbit-one"></div>
@@ -42,14 +42,14 @@ BRAND_HEADER_HTML = """
 INFO_NOTE_HTML = """
 <div class="workflow-strip">
   <div class="workflow-intro">
-    <span class="workflow-label">Bắt đầu</span>
-    <strong>Một luồng học, bốn công cụ.</strong>
+    <span class="workflow-label">Get started</span>
+    <strong>One learning flow, four tools.</strong>
   </div>
   <ol class="workflow-steps">
-    <li><span>01</span>Tải PDF</li>
-    <li><span>02</span>Chọn phạm vi</li>
-    <li><span>03</span>Nhập Gemini key</li>
-    <li><span>04</span>Bắt đầu học</li>
+    <li><span>01</span>Upload PDF</li>
+    <li><span>02</span>Select scope</li>
+    <li><span>03</span>Enter Gemini key</li>
+    <li><span>04</span>Start learning</li>
   </ol>
 </div>
 """
@@ -60,7 +60,7 @@ UPLOAD_HEADING_HTML = """
     <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
     <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
   </span>
-  <div><h2>Nguồn tài liệu</h2><p>Tải và lập chỉ mục PDF của bạn.</p></div>
+  <div><h2>Document sources</h2><p>Upload and index your PDFs.</p></div>
 </div>
 """
 
@@ -71,7 +71,7 @@ LIBRARY_HEADING_HTML = """
     <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"/>
     <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"/></svg>
   </span>
-  <div><h2>Thư viện đã index</h2><p>Chọn tài liệu và phạm vi trước khi truy vấn.</p></div>
+  <div><h2>Indexed library</h2><p>Select documents and scope before querying.</p></div>
 </div>
 """
 
@@ -83,16 +83,16 @@ EMPTY_LIBRARY_HTML = """
       <path d="M14 3.5V7h3M8.5 11h5M8.5 14.5h6"/>
     </svg>
   </span>
-  <span><strong>Thư viện đang trống</strong>
-  <small>Tải PDF ở khung bên trái để bắt đầu không gian học của bạn.</small></span>
+  <span><strong>Library is empty</strong>
+  <small>Upload PDFs in the left panel to start your learning space.</small></span>
 </div>
 """
 
 USAGE_MARKDOWN = """
-1. **Tải PDF** ở khối bên trái rồi bấm **Nạp và index**.  
-2. **Chọn tài liệu** muốn học trong danh sách đã index.  
-3. Dùng các tab để **hỏi đáp**, **tóm tắt**, **tạo quiz** hoặc **flashcards**.  
-4. Nếu chỉ chọn đúng 1 tài liệu, bạn có thể lọc thêm theo **trang**.
+1. **Upload a PDF** in the left panel, then click **Upload & index**.  
+2. **Select documents** to study from the indexed list.  
+3. Use the tabs for **Q&A**, **summary**, **quiz**, or **flashcards**.  
+4. If only 1 document is selected, you can filter by **page**.
 
-**Mẹo:** Khi đặt câu hỏi rõ ràng theo chủ đề, kết quả RAG thường sát và dễ học hơn.
+**Tip:** When you ask clear topic-focused questions, the RAG results are more relevant.
 """

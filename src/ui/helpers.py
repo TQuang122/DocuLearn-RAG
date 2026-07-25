@@ -64,16 +64,6 @@ def result_markdown() -> gr.Markdown:
     return gr.Markdown(elem_classes="result-markdown")
 
 
-def select_learning_tab(label: str) -> gr.Tabs:
-    tab_ids = {
-        "Hỏi đáp": "qa",
-        "Tóm tắt": "summary",
-        "Quiz": "quiz",
-        "Flashcards": "flashcards",
-    }
-    return gr.Tabs(selected=tab_ids.get(label, "qa"))
-
-
 def int_value(value: object) -> int:
     if isinstance(value, (int, float, str)):
         return int(value)
@@ -81,7 +71,7 @@ def int_value(value: object) -> int:
 
 
 def write_export(md_text: str, filename: str) -> str | None:
-    if not md_text or md_text.startswith("Lỗi:"):
+    if not md_text or "Lỗi:" in md_text or md_text.startswith("Error:"):
         return None
     stem = Path(filename).stem
     output_path = settings.export_dir / f"{stem}-{uuid4().hex[:12]}.md"
