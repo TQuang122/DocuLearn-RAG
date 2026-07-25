@@ -15,6 +15,7 @@ class FeaturePanel(NamedTuple):
     raw: gr.Code
     markdown: gr.Markdown
     download: gr.File
+    html: gr.HTML | None
 
 
 def build_feature_panel(
@@ -24,17 +25,18 @@ def build_feature_panel(
     retrieval_count: int,
     download_label: str,
     item_count: tuple[int, int, int, str] | None = None,
+    interactive: bool = False,
 ) -> FeaturePanel:
     gr.Markdown(description, elem_classes="feature-sub")
     with gr.Row(equal_height=False, elem_classes="feature-layout"):
         with gr.Column(scale=4, min_width=0, elem_classes="feature-controls"):
-            query = gr.Textbox(label="Chủ đề (tuỳ chọn)", lines=1)
+            query = gr.Textbox(label="Topic (optional)", lines=1)
             button = gr.Button(
                 button_label,
                 variant="primary",
                 elem_classes="gen-btn",
             )
-            with gr.Accordion("Tuỳ chọn nâng cao", open=False):
+            with gr.Accordion("Advanced options", open=False):
                 item_count_component = None
                 if item_count is not None:
                     minimum, maximum, value, label = item_count
@@ -50,11 +52,16 @@ def build_feature_panel(
                     64,
                     value=retrieval_count,
                     step=1,
-                    label="Số đoạn truy xuất (k)",
+                    label="Retrieval count (k)",
                 )
             with gr.Accordion("JSON debug", open=False):
                 raw = gr.Code(label="", language="json", show_label=False)
         with gr.Column(scale=8, min_width=0, elem_classes="feature-output"):
+            html_component = (
+                gr.HTML(value="", sanitize_html=False, elem_classes="interactive-output")
+                if interactive
+                else None
+            )
             markdown = result_markdown()
             download = gr.File(label=download_label, interactive=False)
     return FeaturePanel(
@@ -65,4 +72,5 @@ def build_feature_panel(
         raw,
         markdown,
         download,
+        html_component,
     )

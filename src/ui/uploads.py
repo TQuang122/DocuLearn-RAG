@@ -67,9 +67,9 @@ def refresh_docs() -> tuple[
     if docs:
         summary = (
             '<div class="library-stats">'
-            f"<strong>{len(docs)}</strong> tài liệu đã index"
+            f"<strong>{len(docs)}</strong> documents indexed"
             '<span aria-hidden="true">·</span>'
-            f"<strong>{sum(int_value(doc['chunk_count']) for doc in docs)}</strong> đoạn văn"
+            f"<strong>{sum(int_value(doc['chunk_count']) for doc in docs)}</strong> chunks"
             "</div>"
         )
     else:
@@ -81,8 +81,8 @@ def refresh_docs() -> tuple[
         gr.update(choices=choices, value=[]),
         doc_map,
         gr.update(
-            choices=["(Tất cả trang)"],
-            value="(Tất cả trang)",
+            choices=["(All pages)"],
+            value="(All pages)",
             interactive=bool(docs),
         ),
         summary,
@@ -93,8 +93,8 @@ def refresh_docs() -> tuple[
 def pages_for_selection(doc_map: dict[str, Any], selected: list[str]) -> dict[str, Any]:
     if len(selected) != 1:
         return gr.update(
-            choices=["(Tất cả trang)"],
-            value="(Tất cả trang)",
+            choices=["(All pages)"],
+            value="(All pages)",
             interactive=False,
         )
     doc = doc_map.get(selected[0]) or {}
@@ -115,7 +115,7 @@ def upload_pdf(
     if not payloads:
         choices, doc_map, page_dropdown, summary, filenames_text = refresh_docs()
         return (
-            status_html("Vui lòng chọn ít nhất một file PDF."),
+            status_html("Please select at least one PDF file."),
             choices,
             doc_map,
             page_dropdown,
@@ -137,16 +137,16 @@ def upload_pdf(
 
     parts: list[str] = []
     if successes:
-        parts.append(f"Đã nạp {len(successes)} file · {chunks_total} đoạn")
+        parts.append(f"Loaded {len(successes)} file · {chunks_total} chunks")
     if failures:
-        parts.append(f"Không thể nạp {len(failures)} file")
+        parts.append(f"Could not load {len(failures)} file")
     details = ""
     if failures:
         items = "".join(
             f"<li><code>{html.escape(item, quote=False)}</code></li>" for item in failures
         )
-        details = f"<details><summary>Xem lỗi</summary><ul>{items}</ul></details>"
-    body = (" · ".join(parts) if parts else "Không có file hợp lệ.") + details
+        details = f"<details><summary>View errors</summary><ul>{items}</ul></details>"
+    body = (" · ".join(parts) if parts else "No valid files.") + details
 
     choices, doc_map, page_dropdown, summary, filenames_text = refresh_docs()
     return (
