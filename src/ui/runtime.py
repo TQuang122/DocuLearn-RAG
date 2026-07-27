@@ -4,6 +4,7 @@ import gradio as gr
 
 from src.config import settings
 from src.ui.helpers import CSS, THEME
+from src.ui.interactive import INTERACTIVE_HEAD_HTML
 
 
 def launch_demo(demo: gr.Blocks) -> None:
@@ -15,6 +16,7 @@ def launch_demo(demo: gr.Blocks) -> None:
         allowed_paths=[str(settings.export_dir.resolve())],
         auth=auth,
         css=CSS,
+        head=INTERACTIVE_HEAD_HTML,
         max_file_size=settings.max_upload_bytes,
         server_name=settings.server_name,
         server_port=settings.server_port,

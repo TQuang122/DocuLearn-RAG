@@ -8,6 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+.claude
+.codex
 
 .env
 .pytest_cache/

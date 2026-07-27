@@ -23,7 +23,7 @@ def ask_question(
 ) -> tuple[str, str]:
     if not question or not question.strip():
         return "Please enter a question.", ""
-    page_num = None if page == "(All pages)" else int(page)
+    page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
     result = answer(
         question.strip(),
@@ -62,7 +62,7 @@ def summarize_documents(
     gemini_key: str,
     progress: gr.Progress = PROGRESS,
 ) -> tuple[str, str]:
-    page_num = None if page == "(All pages)" else int(page)
+    page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
     progress(0.3, desc="Retrieving context…")
     try:
@@ -86,7 +86,7 @@ def generate_quiz_set(
     gemini_key: str,
     progress: gr.Progress = PROGRESS,
 ) -> tuple[str, str]:
-    page_num = None if page == "(All pages)" else int(page)
+    page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
     progress(0.3, desc="Retrieving context…")
     try:
@@ -111,7 +111,7 @@ def generate_flashcard_set(
     gemini_key: str,
     progress: gr.Progress = PROGRESS,
 ) -> tuple[str, str]:
-    page_num = None if page == "(All pages)" else int(page)
+    page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
     progress(0.3, desc="Retrieving context…")
     try:
@@ -137,7 +137,7 @@ def generate_quiz_set_interactive(
     progress: gr.Progress = PROGRESS,
 ) -> tuple[str, str, str]:
     """Generate quiz and return (interactive_html, markdown, json)."""
-    page_num = None if page == "(All pages)" else int(page)
+    page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
     progress(0.3, desc="Retrieving context…")
     try:
@@ -165,7 +165,7 @@ def generate_flashcard_set_interactive(
     progress: gr.Progress = PROGRESS,
 ) -> tuple[str, str, str]:
     """Generate flashcards and return (interactive_html, markdown, json)."""
-    page_num = None if page == "(All pages)" else int(page)
+    page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
     progress(0.3, desc="Retrieving context…")
     try:

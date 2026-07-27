@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import atexit
 from collections.abc import Iterator
 from functools import lru_cache
 
@@ -85,10 +86,18 @@ def close_client() -> None:
     get_client.cache_clear()
 
 
+atexit.register(close_client)
+
+
 @lru_cache(maxsize=1)
 def get_client() -> QdrantClient:
     """Return a cached local Qdrant client backed by on-disk storage."""
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
+
+    lock = settings.storage_dir / ".lock"
+    if lock.exists():
+        lock.unlink()
+
     return QdrantClient(path=str(settings.storage_dir))
 
 

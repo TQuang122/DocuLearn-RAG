@@ -27,7 +27,7 @@ def test_uploaded_path_is_normalized_to_bytes(tmp_path: Path) -> None:
 def test_single_document_selection_enables_its_pages() -> None:
     update = pages_for_selection({"notes.pdf": {"pages": [1, 3]}}, ["notes.pdf"])
 
-    assert update["choices"] == ["(Tất cả trang)", "1", "3"]
+    assert update["choices"] == ["All pages", "1", "3"]
     assert update["interactive"] is True
 
 
@@ -37,7 +37,7 @@ def test_empty_upload_keeps_six_output_contract(monkeypatch: pytest.MonkeyPatch)
         lambda: (
             {"choices": [], "value": []},
             {},
-            {"choices": ["(Tất cả trang)"], "value": "(Tất cả trang)"},
+            {"choices": ["All pages"], "value": "All pages"},
             "",
             "",
         ),
@@ -61,7 +61,7 @@ def test_demo_keeps_learning_event_contract() -> None:
         if dependency["backend_fn"]
     }
 
-    assert len(config["components"]) == 89
+    assert len(config["components"]) == 87
     assert len(config["dependencies"]) == 13
     assert contracts["refresh_documents"] == (0, 5)
     assert contracts["pages_for_selection"] == (2, 1)
@@ -77,10 +77,101 @@ def test_demo_keeps_learning_event_contract() -> None:
     assert contracts["lambda_2"] == (1, 1)
 
 
+def test_setup_accordions_share_one_scoped_component_style() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    labels = {
+        component["props"]["label"]
+        for component in config["components"]
+        if component["type"] == "accordion"
+        and "setup-accordion" in component["props"]["elem_classes"]
+    }
+
+    assert labels == {
+        "Gemini API key",
+        "User guide",
+        "System info",
+        "Advanced options, JSON debug",
+        "Raw markdown",
+    }
+
+
+def test_document_workspace_uses_scoped_ui_components() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    scoped_classes = {
+        css_class
+        for component in config["components"]
+        for css_class in component["props"].get("elem_classes", [])
+    }
+
+    assert {
+        "source-file-picker",
+        "source-index-btn",
+        "library-document-picker",
+        "library-page-picker",
+        "library-refresh-btn",
+        "library-delete-btn",
+    } <= scoped_classes
+
+
+def test_upload_dropzone_keeps_internal_icon_buttons_scoped() -> None:
+    assert ".upload-dropzone button {" not in CSS
+    assert ".upload-dropzone > button:not(.icon-button)" in CSS
+    assert ".source-file-picker .icon-button-wrapper .icon-button" in CSS
+
+
+def test_learning_tabs_target_gradio_six_tablist_dom() -> None:
+    assert ".learning-tabs .tab-nav" not in CSS
+    assert '.learning-tabs .tab-container[role="tablist"] button' in CSS
+    assert 'button[data-tab-id="flashcards"]::before' in CSS
+
+
+def test_advanced_sliders_use_scoped_component_style() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    slider_labels = {
+        component["props"]["label"]
+        for component in config["components"]
+        if component["type"] == "slider"
+        and "feature-slider" in component["props"]["elem_classes"]
+    }
+
+    assert slider_labels == {
+        "Top-k retrieval",
+        "Retrieval count (k)",
+        "Number of questions",
+        "Number of cards",
+    }
+
+
+def test_library_refresh_keeps_page_scope_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "src.ui.uploads.list_documents",
+        lambda: [
+            {
+                "filename": "notes.pdf",
+                "chunk_count": 3,
+                "pages": [1, 2],
+            }
+        ],
+    )
+
+    _, _, page_update, summary, _ = refresh_docs()
+
+    assert page_update["interactive"] is False
+    assert '<div class="library-stat"><strong>1</strong><span>File</span></div>' in summary
+
+
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "f0b2e2dd9f4d5c7e58e8a9c15cb311b426701fe98112b51080186b3ea8f42d29"
+    assert digest == "b581535d44cda7a7e717f58d3a6ab93e87abb89fe153fa6edb86855474bacd85"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

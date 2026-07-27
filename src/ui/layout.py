@@ -20,12 +20,16 @@ from src.ui.content import (
     USAGE_MARKDOWN,
 )
 from src.ui.feature_panel import build_feature_panel
-from src.ui.helpers import status_html, write_export
+from src.ui.helpers import status_html, export_download
 from src.ui.uploads import pages_for_selection, refresh_docs, upload_pdf
 
 
 def build_demo() -> gr.Blocks:
-    with gr.Blocks(title="DocuLearn-RAG", fill_width=True, fill_height=True) as demo:
+    with gr.Blocks(
+        title="DocuLearn-RAG",
+        fill_width=True,
+        fill_height=True,
+    ) as demo:
         gr.HTML(BRAND_HEADER_HTML, elem_classes="brand-shell")
         gr.HTML(INFO_NOTE_HTML, elem_classes="site-info-note")
         doc_map_state = gr.State({})
@@ -39,16 +43,23 @@ def build_demo() -> gr.Blocks:
                     file_types=[".pdf"],
                     file_count="multiple",
                     type="filepath",
-                    elem_classes="upload-dropzone",
+                    elem_classes=["upload-dropzone", "source-file-picker"],
                 )
                 upload_btn = gr.Button(
-                    "Upload & index",
+                    "Index selected PDFs",
                     variant="primary",
-                    elem_classes="gen-btn",
+                    elem_classes=["gen-btn", "source-index-btn"],
                 )
-                upload_status = gr.HTML(status_html("Ready."))
+                upload_status = gr.HTML(
+                    status_html("Ready to index."),
+                    elem_classes="source-status",
+                )
 
-                with gr.Accordion("Gemini API key", open=False):
+                with gr.Accordion(
+                    "Gemini API key",
+                    open=False,
+                    elem_classes="setup-accordion",
+                ):
                     gr.Markdown(
                         "Enter your API key to use Gemini. Get one at: "
                         "[Google AI Studio](https://aistudio.google.com/app/api-keys). ",
@@ -62,10 +73,18 @@ def build_demo() -> gr.Blocks:
                         max_lines=1,
                     )
 
-                with gr.Accordion("User guide", open=False):
+                with gr.Accordion(
+                    "User guide",
+                    open=False,
+                    elem_classes="setup-accordion",
+                ):
                     gr.Markdown(USAGE_MARKDOWN, elem_classes="help-markdown")
 
-                with gr.Accordion("System info", open=False):
+                with gr.Accordion(
+                    "System info",
+                    open=False,
+                    elem_classes="setup-accordion",
+                ):
                     gr.Markdown(
                         f"""
                         - LLM model: `{settings.llm_model}`
@@ -80,19 +99,39 @@ def build_demo() -> gr.Blocks:
             with gr.Column(scale=7, min_width=0, elem_classes="preview-col"):
                 gr.HTML(LIBRARY_HEADING_HTML)
                 with gr.Row(elem_classes="library-actions"):
-                    refresh_btn = gr.Button("Refresh")
-                    delete_btn = gr.Button("Delete selected", variant="stop")
+                    refresh_btn = gr.Button(
+                        "Refresh",
+                        elem_classes="library-refresh-btn",
+                    )
+                    delete_btn = gr.Button(
+                        "Delete selected",
+                        variant="stop",
+                        elem_classes="library-delete-btn",
+                    )
                 doc_summary = gr.HTML(EMPTY_LIBRARY_HTML, elem_classes="doc-summary")
-                docs = gr.CheckboxGroup(label="Select documents", choices=[], value=[])
-                page = gr.Dropdown(
-                    label="Page (only applies when exactly 1 document is selected)",
-                    choices=["(All pages)"],
-                    value="(All pages)",
+                docs = gr.CheckboxGroup(
+                    label="Documents",
+                    info="Choose one or more PDFs to define the learning scope.",
+                    choices=[],
+                    value=[],
+                    elem_classes="library-document-picker",
                 )
-                doc_list_md = gr.Markdown("")
+                page = gr.Dropdown(
+                    label="Page scope",
+                    info="Available when exactly one document is selected.",
+                    choices=["All pages"],
+                    value="All pages",
+                    interactive=False,
+                    elem_classes="library-page-picker",
+                )
+                doc_list_md = gr.Markdown(
+                    "",
+                    visible=False,
+                    elem_classes="library-file-index",
+                )
 
         with gr.Tabs(selected="qa", elem_classes="learning-tabs") as _learning_tabs:
-            with gr.Tab("Q&A", id="qa"):
+            with gr.Tab("Q&A", id="qa", elem_id="qa"):
                 chatbot = gr.Chatbot(
                     elem_classes="qa-chat",
                     height=420,
@@ -111,12 +150,22 @@ def build_demo() -> gr.Blocks:
                     elem_classes="qa-input",
                 )
                 clear_chat_btn = gr.Button("Clear chat", size="sm", elem_classes="clear-chat-btn")
-                with gr.Accordion("Advanced options", open=False):
-                    k_ask = gr.Slider(1, 32, value=6, step=1, label="Top-k retrieval")
-                with gr.Accordion("JSON debug", open=False):
+                with gr.Accordion(
+                    "Advanced options, JSON debug",
+                    open=False,
+                    elem_classes="setup-accordion",
+                ):
+                    k_ask = gr.Slider(
+                        1,
+                        32,
+                        value=6,
+                        step=1,
+                        label="Top-k retrieval",
+                        elem_classes="feature-slider",
+                    )
                     ask_raw = gr.Code(label="", language="json", show_label=False)
 
-            with gr.Tab("Summary", id="summary"):
+            with gr.Tab("Summary", id="summary", elem_id="summary"):
                 summary_panel = build_feature_panel(
                     description=(
                         "Generate a summary based on your selected documents "
@@ -127,7 +176,7 @@ def build_demo() -> gr.Blocks:
                     download_label="Download Markdown",
                 )
 
-            with gr.Tab("Quiz", id="quiz"):
+            with gr.Tab("Quiz", id="quiz", elem_id="quiz"):
                 quiz_panel = build_feature_panel(
                     description="Create a quiz from your selected documents.",
                     button_label="Generate quiz",
@@ -135,9 +184,10 @@ def build_demo() -> gr.Blocks:
                     download_label="Download Markdown",
                     item_count=(1, 30, 3, "Number of questions"),
                     interactive=True,
+                    wrap_markdown=True,
                 )
 
-            with gr.Tab("Flashcards", id="flashcards"):
+            with gr.Tab("Flashcards", id="flashcards", elem_id="flashcards"):
                 flashcard_panel = build_feature_panel(
                     description="Create flashcards from your selected documents for quick review.",
                     button_label="Generate flashcards",
@@ -145,6 +195,7 @@ def build_demo() -> gr.Blocks:
                     download_label="Download Markdown",
                     item_count=(1, 40, 15, "Number of cards"),
                     interactive=True,
+                    wrap_markdown=True,
                 )
 
         gr.HTML('<div class="footer-text"><span>DocuLearn-RAG</span></div>')
@@ -201,7 +252,7 @@ def build_demo() -> gr.Blocks:
             outputs=[summary_panel.markdown, summary_panel.raw],
             api_name="summarize_documents",
         ).then(
-            fn=lambda text: write_export(text, "summary.md"),
+            fn=lambda text: export_download(text, "summary.md"),
             inputs=[summary_panel.markdown],
             outputs=[summary_panel.download],
         )
@@ -220,7 +271,7 @@ def build_demo() -> gr.Blocks:
             outputs=[quiz_panel.html, quiz_panel.markdown, quiz_panel.raw],
             api_name="generate_quiz_set",
         ).then(
-            fn=lambda text: write_export(text, "quiz.md"),
+            fn=lambda text: export_download(text, "quiz.md"),
             inputs=[quiz_panel.markdown],
             outputs=[quiz_panel.download],
         )
@@ -239,7 +290,7 @@ def build_demo() -> gr.Blocks:
             outputs=[flashcard_panel.html, flashcard_panel.markdown, flashcard_panel.raw],
             api_name="generate_flashcard_set",
         ).then(
-            fn=lambda text: write_export(text, "flashcards.md"),
+            fn=lambda text: export_download(text, "flashcards.md"),
             inputs=[flashcard_panel.markdown],
             outputs=[flashcard_panel.download],
         )

@@ -78,3 +78,8 @@ def write_export(md_text: str, filename: str) -> str | None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(md_text, encoding="utf-8")
     return str(output_path)
+
+
+def export_download(md_text: str, filename: str) -> dict:
+    path = write_export(md_text, filename)
+    return gr.update(value=path, visible=path is not None)

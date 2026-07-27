@@ -65,11 +65,17 @@ def refresh_docs() -> tuple[
     choices = [str(doc["filename"]) for doc in docs]
     doc_map = {str(doc["filename"]): doc for doc in docs}
     if docs:
+        document_label = "File" if len(docs) == 1 else "Files"
+        chunk_count = sum(int_value(doc["chunk_count"]) for doc in docs)
+        chunk_label = "Chunk" if chunk_count == 1 else "Chunks"
         summary = (
-            '<div class="library-stats">'
-            f"<strong>{len(docs)}</strong> documents indexed"
-            '<span aria-hidden="true">·</span>'
-            f"<strong>{sum(int_value(doc['chunk_count']) for doc in docs)}</strong> chunks"
+            '<div class="library-stats" aria-label="Indexed library summary">'
+            '<div class="library-stat">'
+            f"<strong>{len(docs)}</strong><span>{document_label}</span>"
+            "</div>"
+            '<div class="library-stat">'
+            f"<strong>{chunk_count}</strong><span>{chunk_label}</span>"
+            "</div>"
             "</div>"
         )
     else:
@@ -81,9 +87,9 @@ def refresh_docs() -> tuple[
         gr.update(choices=choices, value=[]),
         doc_map,
         gr.update(
-            choices=["(All pages)"],
-            value="(All pages)",
-            interactive=bool(docs),
+            choices=["All pages"],
+            value="All pages",
+            interactive=False,
         ),
         summary,
         filenames_text,
@@ -93,17 +99,17 @@ def refresh_docs() -> tuple[
 def pages_for_selection(doc_map: dict[str, Any], selected: list[str]) -> dict[str, Any]:
     if len(selected) != 1:
         return gr.update(
-            choices=["(All pages)"],
-            value="(All pages)",
+            choices=["All pages"],
+            value="All pages",
             interactive=False,
         )
     doc = doc_map.get(selected[0]) or {}
     raw_pages = doc.get("pages")
     pages = raw_pages if isinstance(raw_pages, list) else []
-    page_choices = ["(Tất cả trang)", *[str(page) for page in pages]]
+    page_choices = ["All pages", *[str(page) for page in pages]]
     return gr.update(
         choices=page_choices,
-        value="(Tất cả trang)",
+        value="All pages",
         interactive=True,
     )
 
