@@ -7,8 +7,6 @@ sdk: gradio
 sdk_version: 6.20.0
 app_file: app.py
 python_version: "3.12"
-hardware:
-  accelerator: cpu
 short_description: PDF learning assistant with Q&A, summaries, flashcards
 ---
 
