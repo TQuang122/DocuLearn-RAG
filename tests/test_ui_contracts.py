@@ -235,6 +235,19 @@ def test_qa_heading_typography_is_scoped_against_host_theme_overrides() -> None:
     assert "color: var(--text-tertiary) !important" in CSS
 
 
+def test_feature_heading_typography_is_scoped_against_host_theme_overrides() -> None:
+    for selector in (
+        ".gradio-container .summary-heading h2",
+        ".gradio-container .quiz-heading h2",
+        ".gradio-container .flashcard-heading h2",
+    ):
+        assert selector in CSS
+    assert ".gradio-container .summary-eyebrow" in CSS
+    assert ".gradio-container .quiz-eyebrow" in CSS
+    assert ".gradio-container .flashcard-eyebrow" in CSS
+    assert ".gradio-container .flashcard-mode-note" in CSS
+
+
 def test_flashcard_surface_keeps_navigation_controls_only() -> None:
     from src.schemas import Flashcard, FlashcardSet
     from src.ui.interactive import render_flashcard_html
@@ -411,7 +424,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "c276d2e69df7f3d2948bd95e2681f0e0fd6dd6e55a423ee50d71ccbccee02890"
+    assert digest == "c74b2356837008959fafffbc4d8e65f18c09ab081d6a27dda34be7a3f64c23fc"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

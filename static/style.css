@@ -2477,6 +2477,64 @@ body::after {
   font-weight: 590 !important;
 }
 
+.gradio-container .summary-heading,
+.gradio-container .summary-heading h2,
+.gradio-container .summary-heading p,
+.gradio-container .summary-eyebrow,
+.gradio-container .summary-status,
+.gradio-container .quiz-heading,
+.gradio-container .quiz-heading h2,
+.gradio-container .quiz-heading p,
+.gradio-container .quiz-eyebrow,
+.gradio-container .quiz-status,
+.gradio-container .flashcard-heading,
+.gradio-container .flashcard-heading h2,
+.gradio-container .flashcard-heading p,
+.gradio-container .flashcard-eyebrow,
+.gradio-container .flashcard-status,
+.gradio-container .flashcard-mode-note {
+  font-family: var(--font-sans) !important;
+}
+
+.gradio-container .summary-eyebrow,
+.gradio-container .quiz-eyebrow,
+.gradio-container .flashcard-eyebrow {
+  color: var(--accent-hover) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.12em !important;
+}
+
+.gradio-container .summary-heading h2,
+.gradio-container .quiz-heading h2,
+.gradio-container .flashcard-heading h2 {
+  color: var(--text-primary) !important;
+  font-size: clamp(1.35rem, 2vw, 1.75rem) !important;
+  font-weight: 590 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.gradio-container .summary-heading p,
+.gradio-container .quiz-heading p,
+.gradio-container .flashcard-heading p {
+  color: var(--text-tertiary) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+}
+
+.gradio-container .summary-status,
+.gradio-container .quiz-status,
+.gradio-container .flashcard-status {
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 590 !important;
+}
+
+.gradio-container .flashcard-mode-note {
+  color: var(--text-disabled) !important;
+  font-size: 0.75rem !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .hero-shell {
