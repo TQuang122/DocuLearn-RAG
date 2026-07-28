@@ -2443,6 +2443,40 @@ body::after {
   line-height: 1.65 !important;
 }
 
+.gradio-container .qa-heading,
+.gradio-container .qa-heading h2,
+.gradio-container .qa-heading p,
+.gradio-container .qa-eyebrow,
+.gradio-container .qa-scope-badge {
+  font-family: var(--font-sans) !important;
+}
+
+.gradio-container .qa-eyebrow {
+  color: var(--accent-hover) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.11em !important;
+}
+
+.gradio-container .qa-heading h2 {
+  color: var(--text-primary) !important;
+  font-size: clamp(1.3rem, 2vw, 1.65rem) !important;
+  font-weight: 590 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.gradio-container .qa-heading p {
+  color: var(--text-tertiary) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+.gradio-container .qa-scope-badge {
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 590 !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .hero-shell {

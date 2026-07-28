@@ -227,6 +227,14 @@ def test_hero_typography_is_scoped_against_host_theme_overrides() -> None:
     assert "body::before" in CSS
 
 
+def test_qa_heading_typography_is_scoped_against_host_theme_overrides() -> None:
+    assert ".gradio-container .qa-eyebrow" in CSS
+    assert ".gradio-container .qa-heading h2" in CSS
+    assert ".gradio-container .qa-heading p" in CSS
+    assert "color: var(--accent-hover) !important" in CSS
+    assert "color: var(--text-tertiary) !important" in CSS
+
+
 def test_flashcard_surface_keeps_navigation_controls_only() -> None:
     from src.schemas import Flashcard, FlashcardSet
     from src.ui.interactive import render_flashcard_html
@@ -403,7 +411,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "ec5123dbf63bbc368dda08db9606ae3a0035a9e422eac29d3680846323fc4114"
+    assert digest == "c276d2e69df7f3d2948bd95e2681f0e0fd6dd6e55a423ee50d71ccbccee02890"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:
