@@ -118,6 +118,22 @@ def test_document_workspace_uses_scoped_ui_components() -> None:
     } <= scoped_classes
 
 
+def test_learning_flow_copy_and_credential_guidance_are_consistent() -> None:
+    from src.ui.content import INFO_NOTE_HTML, USAGE_MARKDOWN
+
+    assert "Upload &amp; index PDFs" in INFO_NOTE_HTML
+    assert "Upload & index PDFs" in USAGE_MARKDOWN
+
+
+def test_missing_gemini_key_error_names_recovery_action() -> None:
+    from src.ui.callbacks import _generation_error
+
+    error = _generation_error(RuntimeError("Missing Gemini API key."))
+
+    assert "Gemini API key is missing" in str(error)
+    assert "GEMINI_API_KEY" in str(error)
+
+
 def test_upload_dropzone_keeps_internal_icon_buttons_scoped() -> None:
     assert ".upload-dropzone button {" not in CSS
     assert ".upload-dropzone > button:not(.icon-button)" in CSS

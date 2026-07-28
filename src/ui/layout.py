@@ -50,7 +50,7 @@ def build_demo() -> gr.Blocks:
                     elem_classes=["upload-dropzone", "source-file-picker"],
                 )
                 upload_btn = gr.Button(
-                    "Index selected PDFs",
+                    "Upload & index PDFs",
                     variant="primary",
                     elem_classes=["gen-btn", "source-index-btn"],
                 )
@@ -65,7 +65,14 @@ def build_demo() -> gr.Blocks:
                     elem_classes="setup-accordion",
                 ):
                     gr.Markdown(
-                        "Enter your API key to use Gemini. Get one at: "
+                        (
+                            "**Status:** Gemini is configured via the environment. "
+                            "You can leave this field empty.\n\n"
+                            if settings.gemini_api_key
+                            else "**Status:** No Gemini key is configured yet. "
+                            "Enter one for this session or set `GEMINI_API_KEY`.\n\n"
+                        )
+                        + "Enter a key to use Gemini. Get one at: "
                         "[Google AI Studio](https://aistudio.google.com/app/api-keys). ",
                         elem_classes="help-markdown",
                     )

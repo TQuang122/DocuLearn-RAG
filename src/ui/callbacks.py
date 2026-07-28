@@ -96,7 +96,7 @@ def summarize_documents(
             filters=build_filters(selected_docs, page_num),
         )
     except RuntimeError as error:
-        raise _empty_result_error() from error
+        raise _generation_error(error) from error
     progress(0.9, desc="Formatting results…")
     return str(export(result, fmt="md")), result.model_dump_json(indent=2)
 
@@ -121,7 +121,7 @@ def generate_quiz_set(
             filters=build_filters(selected_docs, page_num),
         )
     except RuntimeError as error:
-        raise _empty_result_error() from error
+        raise _generation_error(error) from error
     progress(0.9, desc="Formatting results…")
     return str(export(result, fmt="md")), result.model_dump_json(indent=2)
 
@@ -146,7 +146,7 @@ def generate_flashcard_set(
             filters=build_filters(selected_docs, page_num),
         )
     except RuntimeError as error:
-        raise _empty_result_error() from error
+        raise _generation_error(error) from error
     progress(0.9, desc="Formatting results…")
     return str(export(result, fmt="md")), result.model_dump_json(indent=2)
 
@@ -172,7 +172,7 @@ def generate_quiz_set_interactive(
             filters=build_filters(selected_docs, page_num),
         )
     except RuntimeError as error:
-        raise _empty_result_error() from error
+        raise _generation_error(error) from error
     progress(0.9, desc="Formatting results…")
     html_str = render_quiz_html(result)
     md_str = str(export(result, fmt="md"))
@@ -200,7 +200,7 @@ def generate_flashcard_set_interactive(
             filters=build_filters(selected_docs, page_num),
         )
     except RuntimeError as error:
-        raise _empty_result_error() from error
+        raise _generation_error(error) from error
     progress(0.9, desc="Formatting results…")
     html_str = render_flashcard_html(result)
     md_str = str(export(result, fmt="md"))
@@ -231,3 +231,12 @@ def _empty_result_error() -> gr.Error:
     return gr.Error(
         "No relevant content found. Please upload documents, select a scope, and try again."
     )
+
+
+def _generation_error(error: RuntimeError) -> gr.Error:
+    if "Missing Gemini API key" in str(error):
+        return gr.Error(
+            "Gemini API key is missing. Open the Gemini API key section, enter a key, "
+            "or set GEMINI_API_KEY before generating."
+        )
+    return _empty_result_error()

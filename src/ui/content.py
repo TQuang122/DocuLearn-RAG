@@ -46,7 +46,7 @@ INFO_NOTE_HTML = """
     <strong>One learning flow, four tools.</strong>
   </div>
   <ol class="workflow-steps">
-    <li><span>01</span>Upload PDF</li>
+    <li><span>01</span>Upload &amp; index PDFs</li>
     <li><span>02</span>Select scope</li>
     <li><span>03</span>Enter Gemini key</li>
     <li><span>04</span>Start learning</li>
@@ -136,7 +136,7 @@ EMPTY_LIBRARY_HTML = """
 """
 
 USAGE_MARKDOWN = """
-1. **Upload a PDF** in the left panel, then click **Upload & index**.  
+1. **Upload & index PDFs** in the left panel.
 2. **Select documents** to study from the indexed list.  
 3. Use the tabs for **Q&A**, **summary**, **quiz**, or **flashcards**.  
 4. If only 1 document is selected, you can filter by **page**.
