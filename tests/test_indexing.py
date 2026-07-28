@@ -8,6 +8,7 @@ import pytest
 from langchain_core.documents import Document
 
 from src.config import settings
+from src.embeddings import _embedding_device
 from src.indexing import _document_id, _splitter, save_and_ingest_pdf
 
 
@@ -40,6 +41,12 @@ def test_splitter_preserves_explicit_zero_overlap() -> None:
     splitter = _splitter(chunk_size=500, chunk_overlap=0)
 
     assert splitter._chunk_overlap == 0
+
+
+def test_embeddings_use_cpu_on_hugging_face_spaces(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SPACE_ID", "Jky71/doculearn-rag")
+
+    assert _embedding_device() == "cpu"
 
 
 def test_failed_upload_does_not_overwrite_existing_pdf(

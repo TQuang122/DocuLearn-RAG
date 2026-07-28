@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from typing import cast
 
@@ -11,9 +12,13 @@ from sentence_transformers import SentenceTransformer
 from src.config import settings
 
 
+def _embedding_device() -> str | None:
+    return "cpu" if os.getenv("SPACE_ID") else None
+
+
 @lru_cache(maxsize=1)
 def _model() -> SentenceTransformer:
-    return SentenceTransformer(settings.embedding_model)
+    return SentenceTransformer(settings.embedding_model, device=_embedding_device())
 
 
 class LocalSentenceTransformerEmbeddings(Embeddings):
