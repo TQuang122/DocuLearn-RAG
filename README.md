@@ -7,7 +7,7 @@ sdk: gradio
 sdk_version: 6.20.0
 app_file: app.py
 python_version: "3.12"
-short_description: PDF-grounded learning assistant with Q&A, summaries, quizzes, and flashcards
+short_description: PDF learning assistant: Q&A, summaries, quizzes, flashcards
 ---
 
 # DocuLearn-RAG
