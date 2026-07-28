@@ -218,6 +218,13 @@ def test_flashcard_panel_has_spaced_repetition_heading() -> None:
     assert ".flashcard-panel > .feature-sub" in CSS
 
 
+def test_hero_typography_is_scoped_against_host_theme_overrides() -> None:
+    assert ".gradio-container .hero-copy h1" in CSS
+    assert "font-size: clamp(2.5rem, 5.6vw, 4.5rem) !important" in CSS
+    assert ".gradio-container .eyebrow" in CSS
+    assert "background-image: none !important" in CSS
+
+
 def test_flashcard_surface_keeps_navigation_controls_only() -> None:
     from src.schemas import Flashcard, FlashcardSet
     from src.ui.interactive import render_flashcard_html
@@ -394,7 +401,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "c398e6c3ff1cd0b687bb8b5538ac4e1a0fc8e82088b5e9ccdaa0b54280574787"
+    assert digest == "b4d80dd6031f32a911c99df237fd96ae7a203181a2078e0a5fdd3e3398df22c1"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

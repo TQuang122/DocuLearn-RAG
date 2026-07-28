@@ -2390,6 +2390,45 @@ body {
   opacity: 0.66;
 }
 
+.gradio-container {
+  background-color: var(--surface-canvas) !important;
+  background-image: none !important;
+}
+
+.gradio-container .hero-shell,
+.gradio-container .hero-copy,
+.gradio-container .hero-copy h1,
+.gradio-container .hero-copy h1 span,
+.gradio-container .hero-copy p,
+.gradio-container .eyebrow {
+  font-family: var(--font-sans) !important;
+}
+
+.gradio-container .eyebrow {
+  color: var(--accent-hover) !important;
+  font-size: 0.75rem !important;
+  font-weight: 510 !important;
+  letter-spacing: 0.075em !important;
+}
+
+.gradio-container .hero-copy h1 {
+  color: var(--text-primary) !important;
+  font-size: clamp(2.5rem, 5.6vw, 4.5rem) !important;
+  font-weight: 510 !important;
+  letter-spacing: -0.045em !important;
+  line-height: 1.02 !important;
+}
+
+.gradio-container .hero-copy h1 span {
+  color: var(--text-tertiary) !important;
+}
+
+.gradio-container .hero-copy p {
+  color: var(--text-secondary) !important;
+  font-size: 1.0625rem !important;
+  line-height: 1.65 !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .hero-shell {
