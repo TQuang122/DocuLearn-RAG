@@ -9,6 +9,8 @@ from src.ui.callbacks import (
     delete_selected_docs,
     generate_flashcard_set_interactive,
     generate_quiz_set_interactive,
+    prepare_delete,
+    reset_delete_confirmation,
     summarize_documents,
 )
 from src.ui.content import (
@@ -118,6 +120,20 @@ def build_demo() -> gr.Blocks:
                         "Delete selected",
                         variant="stop",
                         elem_classes="library-delete-btn",
+                    )
+                delete_prompt = gr.HTML(visible=False, elem_classes="delete-confirmation")
+                with gr.Row(
+                    visible=False,
+                    elem_classes="delete-confirmation-actions",
+                ) as delete_confirmation_actions:
+                    confirm_delete_btn = gr.Button(
+                        "Confirm delete",
+                        variant="stop",
+                        elem_classes="library-delete-confirm-btn",
+                    )
+                    cancel_delete_btn = gr.Button(
+                        "Cancel",
+                        elem_classes="library-delete-cancel-btn",
                     )
                 doc_summary = gr.HTML(EMPTY_LIBRARY_HTML, elem_classes="doc-summary")
                 docs = gr.CheckboxGroup(
@@ -278,6 +294,18 @@ def build_demo() -> gr.Blocks:
             api_name="upload_pdf",
         )
         delete_btn.click(
+            fn=prepare_delete,
+            inputs=[docs],
+            outputs=[
+                delete_prompt,
+                confirm_delete_btn,
+                cancel_delete_btn,
+                delete_btn,
+                delete_confirmation_actions,
+            ],
+            api_name="prepare_delete",
+        )
+        confirm_delete_btn.click(
             fn=delete_selected_docs,
             inputs=[docs],
             outputs=[docs, doc_summary],
@@ -286,6 +314,27 @@ def build_demo() -> gr.Blocks:
             fn=refresh_docs,
             inputs=[],
             outputs=[docs, doc_map_state, page, doc_summary, doc_list_md],
+        ).then(
+            fn=reset_delete_confirmation,
+            inputs=[],
+            outputs=[
+                delete_prompt,
+                confirm_delete_btn,
+                cancel_delete_btn,
+                delete_btn,
+                delete_confirmation_actions,
+            ],
+        )
+        cancel_delete_btn.click(
+            fn=reset_delete_confirmation,
+            inputs=[],
+            outputs=[
+                delete_prompt,
+                confirm_delete_btn,
+                cancel_delete_btn,
+                delete_btn,
+                delete_confirmation_actions,
+            ],
         )
         clear_chat_btn.click(
             fn=clear_chat,

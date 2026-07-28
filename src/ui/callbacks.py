@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 
 import gradio as gr
@@ -49,11 +50,15 @@ def ask_question(
         return "Please enter a question.", ""
     page_num = None if page == "All pages" else int(page)
     set_runtime_gemini_api_key(gemini_key)
-    result = answer(
-        question.strip(),
-        k=int(k),
-        filters=build_filters(selected_docs, page_num),
-    )
+    try:
+        result = answer(
+            question.strip(),
+            k=int(k),
+            filters=build_filters(selected_docs, page_num),
+        )
+    except RuntimeError as error:
+        message = _generation_message(error)
+        return message, json.dumps({"error": message}, ensure_ascii=False, indent=2)
     return (
         str(export(result, fmt="md")),
         json.dumps(result.model_dump(), ensure_ascii=False, indent=2),
@@ -67,12 +72,15 @@ def ask_chat(
     selected_docs: list[str],
     page: str,
     gemini_key: str,
+    progress: gr.Progress = PROGRESS,
 ) -> tuple[list[gr.ChatMessage], str, str]:
     user_text = (message or "").strip()
     turns = _normalize_chat_history(history)
     if not user_text:
         return turns, "", ""
+    progress(0.2, desc="Retrieving context…")
     answer_md, raw = ask_question(user_text, k, selected_docs, page, gemini_key)
+    progress(0.9, desc="Formatting answer…")
     turns.append(gr.ChatMessage(role="user", content=user_text))
     turns.append(gr.ChatMessage(role="assistant", content=answer_md))
     return turns, raw, ""
@@ -222,6 +230,41 @@ def delete_selected_docs(
     return filenames, f"Deleted {len(selected)} document(s)."
 
 
+def prepare_delete(
+    selected: list[str],
+) -> tuple[str, dict[str, bool], dict[str, bool], dict[str, bool], dict[str, bool]]:
+    if not selected:
+        raise gr.Error("Select at least one document before deleting.")
+    count = len(selected)
+    names = ", ".join(html.escape(str(name), quote=False) for name in selected[:3])
+    if count > 3:
+        names += f" and {count - 3} more"
+    prompt = (
+        '<div class="delete-confirmation-message">'
+        f"Delete <strong>{names}</strong>? This removes the indexed vectors."
+        " The original PDF remains available for re-indexing.</div>"
+    )
+    return (
+        prompt,
+        gr.update(visible=True),
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=True),
+    )
+
+
+def reset_delete_confirmation() -> tuple[
+    str, dict[str, bool], dict[str, bool], dict[str, bool], dict[str, bool]
+]:
+    return (
+        "",
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=False),
+    )
+
+
 def clear_chat() -> tuple[list[list[str]], str]:
     """Clear the chat history."""
     return [], ""
@@ -234,9 +277,22 @@ def _empty_result_error() -> gr.Error:
 
 
 def _generation_error(error: RuntimeError) -> gr.Error:
+    return gr.Error(_generation_message(error))
+
+
+def _generation_message(error: RuntimeError) -> str:
     if "Missing Gemini API key" in str(error):
-        return gr.Error(
+        return (
             "Gemini API key is missing. Open the Gemini API key section, enter a key, "
             "or set GEMINI_API_KEY before generating."
         )
-    return _empty_result_error()
+    error_text = str(error).lower()
+    if "401" in error_text or "403" in error_text or "unauthorized" in error_text:
+        return "Gemini rejected the API key. Check the key and try again."
+    if "429" in error_text or "rate limit" in error_text:
+        return "Gemini rate limit reached. Wait briefly, then click Generate or Send again."
+    if "timeout" in error_text or "timed out" in error_text:
+        return "Gemini timed out while generating. Check your connection and try again."
+    if "No relevant content" in str(error):
+        return "No relevant content found. Upload documents, select a scope, and try again."
+    return "Generation failed. Check your connection and try Generate or Send again."

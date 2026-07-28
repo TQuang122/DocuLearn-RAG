@@ -2164,6 +2164,33 @@ body {
   color: #f09ba2 !important;
 }
 
+.delete-confirmation {
+  margin-top: var(--space-3) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  border: 1px solid rgba(224, 98, 108, 0.28) !important;
+  border-radius: var(--radius-card) !important;
+  color: var(--text-secondary) !important;
+  background: rgba(224, 98, 108, 0.06) !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.5 !important;
+}
+
+.delete-confirmation-actions {
+  gap: var(--space-2) !important;
+  margin-top: var(--space-2) !important;
+}
+
+.delete-confirmation-actions > button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+.gradio-container .library-delete-confirm-btn {
+  border-color: rgba(224, 98, 108, 0.45) !important;
+  color: #f09ba2 !important;
+  background: rgba(224, 98, 108, 0.1) !important;
+}
+
 .library-document-picker,
 .library-page-picker {
   padding: var(--space-4) !important;

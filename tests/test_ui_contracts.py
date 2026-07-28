@@ -61,8 +61,8 @@ def test_demo_keeps_learning_event_contract() -> None:
         if dependency["backend_fn"]
     }
 
-    assert len(config["components"]) == 97
-    assert len(config["dependencies"]) == 14
+    assert len(config["components"]) == 101
+    assert len(config["dependencies"]) == 17
     assert contracts["refresh_documents"] == (0, 5)
     assert contracts["pages_for_selection"] == (2, 1)
     assert contracts["upload_pdf"] == (1, 6)
@@ -73,6 +73,9 @@ def test_demo_keeps_learning_event_contract() -> None:
     assert contracts["generate_flashcard_set"] == (6, 3)
     assert contracts["clear_chat"] == (0, 1)
     assert contracts["delete_selected_docs"] == (1, 2)
+    assert contracts["prepare_delete"] == (1, 5)
+    assert contracts["reset_delete_confirmation"] == (0, 5)
+    assert contracts["reset_delete_confirmation_1"] == (0, 5)
     assert contracts["lambda"] == (1, 1)
     assert contracts["lambda_1"] == (1, 1)
     assert contracts["lambda_2"] == (1, 1)
@@ -132,6 +135,18 @@ def test_missing_gemini_key_error_names_recovery_action() -> None:
 
     assert "Gemini API key is missing" in str(error)
     assert "GEMINI_API_KEY" in str(error)
+
+
+def test_delete_confirmation_escapes_names_and_preserves_restore_path() -> None:
+    from src.ui.callbacks import prepare_delete
+
+    prompt, confirm, cancel, delete, actions = prepare_delete(["<notes>.pdf"])
+
+    assert "&lt;notes&gt;.pdf" in prompt
+    assert confirm["visible"] is True
+    assert cancel["visible"] is True
+    assert delete["visible"] is False
+    assert actions["visible"] is True
 
 
 def test_upload_dropzone_keeps_internal_icon_buttons_scoped() -> None:
@@ -448,7 +463,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "d0b59f8197f105ebbad433ba843ac55569e9b1a183e1c9a1d1e1812b0636f4a7"
+    assert digest == "55e1a75fdea3713501f288e6facea4562bb231bc70ba9691f11a755d7a015ba9"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:
