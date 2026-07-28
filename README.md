@@ -1,3 +1,15 @@
+---
+title: DocuLearn RAG
+emoji: 📚
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: 6.20.0
+app_file: app.py
+python_version: "3.12"
+short_description: PDF learning assistant with Q&A, summaries, flashcards
+---
+
 # DocuLearn-RAG
 
 Ứng dụng học tập cục bộ trên PDF, gồm hỏi đáp RAG, tóm tắt, quiz và
