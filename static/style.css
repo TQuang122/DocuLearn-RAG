@@ -2535,6 +2535,47 @@ body::after {
   font-size: 0.75rem !important;
 }
 
+.gradio-container .workflow-strip,
+.gradio-container .workflow-intro,
+.gradio-container .workflow-intro strong,
+.gradio-container .workflow-steps,
+.gradio-container .workflow-steps li {
+  font-family: var(--font-sans) !important;
+}
+
+.gradio-container .workflow-strip {
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-panel) !important;
+  background: var(--surface-glass) !important;
+}
+
+.gradio-container .workflow-label,
+.gradio-container .workflow-steps span {
+  font-family: var(--font-mono) !important;
+}
+
+.gradio-container .workflow-label {
+  color: var(--status-warning) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+.gradio-container .workflow-intro strong {
+  color: var(--text-primary) !important;
+  font-size: 0.9375rem !important;
+  font-weight: 510 !important;
+}
+
+.gradio-container .workflow-steps li {
+  color: var(--text-secondary) !important;
+  font-size: 0.8125rem !important;
+}
+
+.gradio-container .workflow-steps span {
+  color: var(--text-disabled) !important;
+  font-size: 0.6875rem !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .hero-shell {

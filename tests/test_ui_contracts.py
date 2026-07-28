@@ -248,6 +248,14 @@ def test_feature_heading_typography_is_scoped_against_host_theme_overrides() -> 
     assert ".gradio-container .flashcard-mode-note" in CSS
 
 
+def test_workflow_strip_typography_is_scoped_against_host_theme_overrides() -> None:
+    assert ".gradio-container .workflow-strip" in CSS
+    assert ".gradio-container .workflow-label" in CSS
+    assert ".gradio-container .workflow-intro strong" in CSS
+    assert ".gradio-container .workflow-steps li" in CSS
+    assert ".gradio-container .workflow-steps span" in CSS
+
+
 def test_flashcard_surface_keeps_navigation_controls_only() -> None:
     from src.schemas import Flashcard, FlashcardSet
     from src.ui.interactive import render_flashcard_html
@@ -424,7 +432,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "c74b2356837008959fafffbc4d8e65f18c09ab081d6a27dda34be7a3f64c23fc"
+    assert digest == "d0b59f8197f105ebbad433ba843ac55569e9b1a183e1c9a1d1e1812b0636f4a7"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:
