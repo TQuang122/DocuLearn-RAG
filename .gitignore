@@ -11,6 +11,7 @@ wheels/
 .claude
 .codex
 .omc
+.impeccable
 
 .env
 .pytest_cache/
@@ -48,6 +49,8 @@ coverage.xml
 # Gradio runtime artifacts
 flagged/
 gradio_cached_examples/
+qa-*.png
 
 data/*.pdf
-data/**/*.pdfuv.lock
+data/**/*.pdf
+uv.lock

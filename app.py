@@ -1,4 +1,12 @@
-import spaces
+try:
+    import spaces
+except ModuleNotFoundError:
+    class _LocalSpaces:
+        @staticmethod
+        def GPU(function):
+            return function
+
+    spaces = _LocalSpaces()
 from src.ui import build_demo, launch_demo
 
 

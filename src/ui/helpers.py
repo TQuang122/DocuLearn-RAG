@@ -60,8 +60,10 @@ def status_html(message: str, *, trusted: bool = False) -> str:
     return f'<div class="status-bar">{body}</div>'
 
 
-def result_markdown() -> gr.Markdown:
-    return gr.Markdown(elem_classes="result-markdown")
+def result_markdown(
+    *, value: str = "", elem_classes: str | list[str] = "result-markdown"
+) -> gr.Markdown:
+    return gr.Markdown(value=value, elem_classes=elem_classes)
 
 
 def int_value(value: object) -> int:

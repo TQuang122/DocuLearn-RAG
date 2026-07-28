@@ -40,11 +40,9 @@ def safe_markdown_code(value: str) -> str:
 
 
 def _citation_line(c: Citation) -> str:
-    parts = [f"[{c.source_marker}] {_safe_inline(c.filename)} p.{c.page}"]
+    parts = [f"**[{c.source_marker}]** {_safe_inline(c.filename)} · Page {c.page}"]
     if c.section:
-        parts.append(f"section: {_safe_inline(c.section)}")
-    if c.chunk_id:
-        parts.append(f"chunk: {_safe_inline(c.chunk_id)}")
+        parts.append(f"Section: {_safe_inline(c.section)}")
     return " | ".join(parts)
 
 
@@ -72,11 +70,9 @@ def _marker_details(citations: list[Citation], markers: list[str]) -> list[str]:
         c = by_marker.get(m)
         if c is None:
             continue
-        summary = f"[{c.source_marker}] {_safe_inline(c.filename)} p.{c.page}"
+        summary = f"**[{c.source_marker}]** {_safe_inline(c.filename)} · Page {c.page}"
         if c.section:
-            summary += f" | section: {_safe_inline(c.section)}"
-        if c.chunk_id:
-            summary += f" | chunk: {_safe_inline(c.chunk_id)}"
+            summary += f" | Section: {_safe_inline(c.section)}"
         if c.source_text:
             lines.append(f"- {_details_block(summary, c.source_text)}")
         else:

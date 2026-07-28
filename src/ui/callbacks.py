@@ -14,6 +14,30 @@ from src.ui.interactive import render_flashcard_html, render_quiz_html
 from src.ui.uploads import build_filters
 
 
+def _chat_message_text(content: object) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item["text"])
+        return "".join(parts)
+    return ""
+
+
+def _normalize_chat_history(history: list[dict[str, object]] | None) -> list[gr.ChatMessage]:
+    normalized: list[gr.ChatMessage] = []
+    for message in history or []:
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        text = _chat_message_text(message.get("content"))
+        if role in {"user", "assistant", "system"} and text:
+            normalized.append(gr.ChatMessage(role=str(role), content=text))
+    return normalized
+
+
 def ask_question(
     question: str,
     k: int,
@@ -38,19 +62,19 @@ def ask_question(
 
 def ask_chat(
     message: str,
-    history: list[dict[str, str]] | None,
+    history: list[dict[str, object]] | None,
     k: int,
     selected_docs: list[str],
     page: str,
     gemini_key: str,
-) -> tuple[list[dict[str, str]], str, str]:
+) -> tuple[list[gr.ChatMessage], str, str]:
     user_text = (message or "").strip()
-    turns = list(history or [])
+    turns = _normalize_chat_history(history)
     if not user_text:
         return turns, "", ""
     answer_md, raw = ask_question(user_text, k, selected_docs, page, gemini_key)
-    turns.append({"role": "user", "content": user_text})
-    turns.append({"role": "assistant", "content": answer_md})
+    turns.append(gr.ChatMessage(role="user", content=user_text))
+    turns.append(gr.ChatMessage(role="assistant", content=answer_md))
     return turns, raw, ""
 
 

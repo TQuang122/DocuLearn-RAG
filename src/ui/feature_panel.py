@@ -27,10 +27,21 @@ def build_feature_panel(
     item_count: tuple[int, int, int, str] | None = None,
     wrap_markdown: bool = False,
     interactive: bool = False,
+    heading_html: str | None = None,
+    panel_class: str = "feature-panel",
 ) -> FeaturePanel:
+    if heading_html:
+        gr.HTML(heading_html, elem_classes=f"{panel_class}-heading")
     gr.Markdown(description, elem_classes="feature-sub")
-    with gr.Row(equal_height=False, elem_classes="feature-layout"):
-        with gr.Column(scale=4, min_width=0, elem_classes="feature-controls"):
+    with gr.Row(
+        equal_height=False,
+        elem_classes=["feature-layout", f"{panel_class}-layout"],
+    ):
+        with gr.Column(
+            scale=4,
+            min_width=0,
+            elem_classes=["feature-controls", f"{panel_class}-controls"],
+        ):
             query = gr.Textbox(label="Topic (optional)", lines=1)
             button = gr.Button(
                 button_label,
@@ -62,7 +73,11 @@ def build_feature_panel(
                     elem_classes="feature-slider",
                 )
                 raw = gr.Code(label="", language="json", show_label=False)
-        with gr.Column(scale=8, min_width=0, elem_classes="feature-output"):
+        with gr.Column(
+            scale=8,
+            min_width=0,
+            elem_classes=["feature-output", f"{panel_class}-output"],
+        ):
             html_component = (
                 gr.HTML(value="", sanitize_html=False, elem_classes="interactive-output")
                 if interactive
@@ -76,7 +91,19 @@ def build_feature_panel(
                 ):
                     markdown = result_markdown()
             else:
-                markdown = result_markdown()
+                markdown = result_markdown(
+                    value=(
+                        "### Your summary will appear here\n\n"
+                        "Select documents, choose a scope, then generate a focused brief."
+                        if panel_class == "summary-panel"
+                        else ""
+                    ),
+                    elem_classes=(
+                        ["result-markdown", "summary-result"]
+                        if panel_class == "summary-panel"
+                        else "result-markdown"
+                    ),
+                )
             download = gr.File(label=download_label, interactive=False, visible=False)
     return FeaturePanel(
         query,

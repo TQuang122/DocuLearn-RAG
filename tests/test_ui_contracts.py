@@ -61,12 +61,13 @@ def test_demo_keeps_learning_event_contract() -> None:
         if dependency["backend_fn"]
     }
 
-    assert len(config["components"]) == 87
-    assert len(config["dependencies"]) == 13
+    assert len(config["components"]) == 97
+    assert len(config["dependencies"]) == 14
     assert contracts["refresh_documents"] == (0, 5)
     assert contracts["pages_for_selection"] == (2, 1)
     assert contracts["upload_pdf"] == (1, 6)
     assert contracts["ask_chat"] == (6, 3)
+    assert contracts["ask_chat_button"] == (6, 3)
     assert contracts["summarize_documents"] == (5, 2)
     assert contracts["generate_quiz_set"] == (6, 3)
     assert contracts["generate_flashcard_set"] == (6, 3)
@@ -127,6 +128,139 @@ def test_learning_tabs_target_gradio_six_tablist_dom() -> None:
     assert ".learning-tabs .tab-nav" not in CSS
     assert '.learning-tabs .tab-container[role="tablist"] button' in CSS
     assert 'button[data-tab-id="flashcards"]::before' in CSS
+    assert ".qa-tab.qa-stage" in CSS
+    assert '[aria-label*="delete" i]' in CSS
+
+
+def test_qa_composer_uses_flat_html_notes() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    html_classes = {
+        css_class
+        for component in config["components"]
+        if component["type"] == "html"
+        for css_class in component["props"].get("elem_classes", [])
+    }
+
+    assert "qa-composer-note" in html_classes
+    assert ".qa-composer .qa-composer-note > div" in CSS
+    assert "height: 56px !important" in CSS
+    assert "resize: none !important" in CSS
+    assert "flex: 1 1 auto !important" in CSS
+    assert "width: 100% !important" in CSS
+    assert "max-width: none !important" in CSS
+    assert "max-width: 56px !important" in CSS
+    textbox = next(
+        component
+        for component in config["components"]
+        if component["type"] == "textbox"
+        and "qa-input" in component["props"].get("elem_classes", [])
+    )
+    assert textbox["props"]["submit_btn"] is False
+    assert textbox["props"]["scale"] == 1
+    assert textbox["props"]["min_width"] == 0
+    assert textbox["props"]["elem_id"] == "qa-query"
+    assert "#qa-query" in CSS
+    assert ".qa-composer-row" in CSS
+    send_button = next(
+        component
+        for component in config["components"]
+        if component["type"] == "button"
+        and "qa-send-btn" in component["props"].get("elem_classes", [])
+    )
+    assert send_button["props"]["elem_id"] == "qa-send"
+    assert ".qa-chat .message.user .prose" in CSS
+
+
+def test_summary_panel_has_focused_brief_surface() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    html_values = [
+        component["props"].get("value", "")
+        for component in config["components"]
+        if component["type"] == "html"
+    ]
+    assert any("Build a focused summary" in value for value in html_values)
+    assert ".summary-heading" in CSS
+    assert ".summary-presets" in CSS
+    assert ".summary-result" in CSS
+
+
+def test_quiz_panel_has_focused_learning_heading() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    html_values = [
+        component["props"].get("value", "")
+        for component in config["components"]
+        if component["type"] == "html"
+    ]
+    assert any("Test your understanding" in value for value in html_values)
+    assert any("Practice-ready" in value for value in html_values)
+    assert ".quiz-heading" in CSS
+    assert ".quiz-panel > .feature-sub" in CSS
+
+
+def test_flashcard_panel_has_spaced_repetition_heading() -> None:
+    from app import demo
+
+    config = demo.get_config_file()
+    html_values = [
+        component["props"].get("value", "")
+        for component in config["components"]
+        if component["type"] == "html"
+    ]
+    assert any("Review what you know" in value for value in html_values)
+    assert any("Study-ready" in value for value in html_values)
+    assert ".flashcard-heading" in CSS
+    assert ".flashcard-panel > .feature-sub" in CSS
+
+
+def test_flashcard_surface_keeps_navigation_controls_only() -> None:
+    from src.schemas import Flashcard, FlashcardSet
+    from src.ui.interactive import render_flashcard_html
+
+    cards = FlashcardSet(
+        scope="corpus",
+        cards=[Flashcard(front="Front", back="Back")],
+        citations=[],
+    )
+    markup = render_flashcard_html(cards)
+
+    assert 'id="fc-prev"' in markup
+    assert 'class="fc-shuffle-btn"' in markup
+    assert 'id="fc-next"' in markup
+    assert "How well did you remember?" not in markup
+    assert "Study mode" not in markup
+    assert "Again" not in markup
+    assert "Got it" not in markup
+
+
+def test_flashcard_surface_keeps_flip_hint_and_sources() -> None:
+    from src.schemas import Citation, Flashcard, FlashcardSet
+    from src.ui.interactive import render_flashcard_html
+
+    cards = FlashcardSet(
+        scope="corpus",
+        cards=[Flashcard(front="Front", back="Back", source_markers=["S1"])],
+        citations=[
+            Citation(
+                source_index=1,
+                source_marker="S1",
+                filename="notes.pdf",
+                page=2,
+                source_text="Passage",
+                chunk_id="notes:2:1",
+            )
+        ],
+    )
+    markup = render_flashcard_html(cards)
+
+    assert "Tap to reveal" in markup
+    assert "notes.pdf" in markup
+    assert ".fc-sources" in CSS
 
 
 def test_advanced_sliders_use_scoped_component_style() -> None:
@@ -146,6 +280,95 @@ def test_advanced_sliders_use_scoped_component_style() -> None:
         "Number of questions",
         "Number of cards",
     }
+
+
+def test_quiz_surface_uses_single_question_navigation() -> None:
+    from src.schemas import QuizItem, QuizSet
+    from src.ui.interactive import render_quiz_html
+
+    quiz = QuizSet(
+        scope="corpus",
+        items=[
+            QuizItem(
+                question="Which answer is correct?",
+                options=["A", "B", "C", "D"],
+                correct_index=0,
+                explanation="The first option is correct.",
+            )
+        ],
+        citations=[],
+    )
+    markup = render_quiz_html(quiz)
+
+    assert 'id="iq-prev"' in markup
+    assert 'id="iq-next"' in markup
+    assert "IQ_PREV" in markup
+    assert "IQ_NEXT" in markup
+    assert ".iq-question-index" in CSS
+    assert ".iq-next-btn" in CSS
+
+
+def test_quiz_surface_includes_result_retry_and_sources() -> None:
+    from src.schemas import Citation, QuizItem, QuizSet
+    from src.ui.interactive import render_quiz_html
+
+    quiz = QuizSet(
+        scope="corpus",
+        items=[
+            QuizItem(
+                question="Which answer is correct?",
+                options=["A", "B", "C", "D"],
+                correct_index=0,
+                explanation="The first option is correct.",
+                source_markers=["S1"],
+            )
+        ],
+        citations=[
+            Citation(
+                source_index=1,
+                source_marker="S1",
+                filename="notes.pdf",
+                page=2,
+                source_text="Passage text",
+                chunk_id="notes:2:1",
+            )
+        ],
+    )
+    markup = render_quiz_html(quiz)
+
+    assert "Retry incorrect" in markup
+    assert "iq-accuracy" in markup
+    assert "notes.pdf" in markup
+    assert "Passage text" in markup
+    assert "IQ_RETRY_INCORRECT" in markup
+    assert ".iq-sources" in CSS
+
+
+def test_quiz_surface_supports_exam_mode_and_keyboard_shortcuts() -> None:
+    from src.schemas import QuizItem, QuizSet
+    from src.ui.interactive import render_quiz_html
+
+    quiz = QuizSet(
+        scope="corpus",
+        items=[
+            QuizItem(
+                question="Which answer is correct?",
+                options=["A", "B", "C", "D"],
+                correct_index=0,
+                explanation="The first option is correct.",
+                difficulty="Hard",
+            )
+        ],
+        citations=[],
+    )
+    markup = render_quiz_html(quiz)
+
+    assert 'data-mode="exam"' in markup
+    assert "IQ_SET_MODE" in markup
+    assert "1–4 answer" in markup
+    assert '"difficulty": "Hard"' in markup
+    assert ".iq-modebar" in CSS
+    assert ".iq-difficulty" in CSS
 
 
 def test_library_refresh_keeps_page_scope_disabled(
@@ -171,7 +394,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "b581535d44cda7a7e717f58d3a6ab93e87abb89fe153fa6edb86855474bacd85"
+    assert digest == "c398e6c3ff1cd0b687bb8b5538ac4e1a0fc8e82088b5e9ccdaa0b54280574787"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

@@ -75,6 +75,53 @@ LIBRARY_HEADING_HTML = """
 </div>
 """
 
+QA_HEADING_HTML = """
+<div class="qa-heading">
+  <div>
+    <div class="qa-eyebrow">Grounded conversation</div>
+    <h2>Ask your documents</h2>
+    <p>Answers stay anchored to the sources in your current study scope.</p>
+  </div>
+  <div class="qa-scope-badge">
+    <span class="qa-scope-dot" aria-hidden="true"></span>
+    <span>Source-aware</span>
+  </div>
+</div>
+"""
+
+SUMMARY_HEADING_HTML = (
+    '<div class="summary-heading"><div>'
+    '<div class="summary-eyebrow">Document brief</div>'
+    '<h2>Build a focused summary</h2>'
+    '<p>Turn your selected sources into a concise, cited study brief.</p>'
+    '</div><div class="summary-status"><span aria-hidden="true"></span>'
+    'Source-grounded</div></div>'
+    '<div class="summary-presets" aria-label="Summary focus presets">'
+    '<span class="summary-presets-label">Focus</span>'
+    '<span>Key ideas</span><span>Technical terms</span><span>Exam revision</span>'
+    '</div>'
+)
+
+QUIZ_HEADING_HTML = (
+    '<div class="quiz-heading"><div>'
+    '<div class="quiz-eyebrow">Active recall</div>'
+    '<h2>Test your understanding</h2>'
+    '<p>Turn your selected documents into a focused, source-grounded quiz.</p>'
+    '</div><div class="quiz-status"><span aria-hidden="true"></span>'
+    'Practice-ready</div></div>'
+)
+
+FLASHCARD_HEADING_HTML = (
+    '<div class="flashcard-heading"><div>'
+    '<div class="flashcard-eyebrow">Spaced repetition</div>'
+    '<h2>Review what you know</h2>'
+    '<p>Turn your selected documents into focused study cards with source-backed answers.</p>'
+    '</div><div class="flashcard-status"><span aria-hidden="true"></span>'
+    'Study-ready</div></div>'
+    '<div class="flashcard-mode-note">Learn, Review, Shuffle, or '
+    'Exam mode to match your study flow.</div>'
+)
+
 EMPTY_LIBRARY_HTML = """
 <div class="library-empty">
   <span class="library-empty-icon" aria-hidden="true">

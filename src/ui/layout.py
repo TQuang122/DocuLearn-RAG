@@ -14,13 +14,17 @@ from src.ui.callbacks import (
 from src.ui.content import (
     BRAND_HEADER_HTML,
     EMPTY_LIBRARY_HTML,
+    FLASHCARD_HEADING_HTML,
     INFO_NOTE_HTML,
     LIBRARY_HEADING_HTML,
+    QA_HEADING_HTML,
+    QUIZ_HEADING_HTML,
+    SUMMARY_HEADING_HTML,
     UPLOAD_HEADING_HTML,
     USAGE_MARKDOWN,
 )
 from src.ui.feature_panel import build_feature_panel
-from src.ui.helpers import status_html, export_download
+from src.ui.helpers import export_download, status_html
 from src.ui.uploads import pages_for_selection, refresh_docs, upload_pdf
 
 
@@ -118,7 +122,7 @@ def build_demo() -> gr.Blocks:
                 )
                 page = gr.Dropdown(
                     label="Page scope",
-                    info="Available when exactly one document is selected.",
+                    info="Choose all pages or focus on one page after selecting a single PDF.",
                     choices=["All pages"],
                     value="All pages",
                     interactive=False,
@@ -131,25 +135,67 @@ def build_demo() -> gr.Blocks:
                 )
 
         with gr.Tabs(selected="qa", elem_classes="learning-tabs") as _learning_tabs:
-            with gr.Tab("Q&A", id="qa", elem_id="qa"):
+            with gr.Tab(
+                "Q&A",
+                id="qa",
+                elem_id="qa",
+                elem_classes=["qa-tab", "qa-stage"],
+            ):
+                gr.HTML(QA_HEADING_HTML, elem_classes="qa-heading-shell")
                 chatbot = gr.Chatbot(
                     elem_classes="qa-chat",
-                    height=420,
+                    height=380,
+                    min_height=260,
+                    max_height=520,
                     show_label=False,
+                    layout="bubble",
+                    buttons=["copy_all"],
+                    feedback_options=[],
+                    placeholder="Ask a question to start your research thread.",
                 )
-                gr.Markdown(
-                    "Type your question below and press **Enter** to chat about "
-                    "your selected documents.",
-                    elem_classes="feature-sub",
-                )
-                q = gr.Textbox(
-                    label="",
-                    show_label=False,
-                    lines=1,
-                    placeholder="Ask a question and press Enter…",
-                    elem_classes="qa-input",
-                )
-                clear_chat_btn = gr.Button("Clear chat", size="sm", elem_classes="clear-chat-btn")
+                with gr.Group(elem_classes="qa-composer"):
+                    gr.HTML(
+                        '<div class="qa-composer-hint"><strong>Selected scope</strong>'
+                        '<span aria-hidden="true"> · </span>'
+                        'Indexed documents and page filters apply automatically.</div>',
+                        elem_classes="qa-composer-note",
+                    )
+                    with gr.Row(elem_classes="qa-composer-row"):
+                        q = gr.Textbox(
+                            label="Ask a question",
+                            show_label=False,
+                            lines=1,
+                            placeholder="Ask about your selected documents…",
+                            submit_btn=False,
+                            scale=1,
+                            min_width=0,
+                            elem_id="qa-query",
+                            elem_classes="qa-input",
+                        )
+                        send_btn = gr.Button(
+                            "Send",
+                            variant="primary",
+                            scale=0,
+                            min_width=56,
+                            elem_id="qa-send",
+                            elem_classes="qa-send-btn",
+                        )
+                    gr.HTML(
+                        '<div class="qa-composer-meta">Press <strong>Enter</strong>'
+                        ' to send <span aria-hidden="true">·</span> '
+                        'source passages included.</div>',
+                        elem_classes="qa-composer-note",
+                    )
+                with gr.Row(elem_classes="qa-actions"):
+                    gr.HTML(
+                        '<div class="qa-grounding-note">Grounded in your selected PDF scope.</div>',
+                        elem_classes="qa-composer-note",
+                    )
+                    clear_chat_btn = gr.Button(
+                        "Clear conversation",
+                        size="sm",
+                        elem_classes="clear-chat-btn",
+                    )
                 with gr.Accordion(
                     "Advanced options, JSON debug",
                     open=False,
@@ -174,6 +220,8 @@ def build_demo() -> gr.Blocks:
                     button_label="Generate summary",
                     retrieval_count=10,
                     download_label="Download Markdown",
+                    heading_html=SUMMARY_HEADING_HTML,
+                    panel_class="summary-panel",
                 )
 
             with gr.Tab("Quiz", id="quiz", elem_id="quiz"):
@@ -185,6 +233,8 @@ def build_demo() -> gr.Blocks:
                     item_count=(1, 30, 3, "Number of questions"),
                     interactive=True,
                     wrap_markdown=True,
+                    heading_html=QUIZ_HEADING_HTML,
+                    panel_class="quiz-panel",
                 )
 
             with gr.Tab("Flashcards", id="flashcards", elem_id="flashcards"):
@@ -196,6 +246,8 @@ def build_demo() -> gr.Blocks:
                     item_count=(1, 40, 15, "Number of cards"),
                     interactive=True,
                     wrap_markdown=True,
+                    heading_html=FLASHCARD_HEADING_HTML,
+                    panel_class="flashcard-panel",
                 )
 
         gr.HTML('<div class="footer-text"><span>DocuLearn-RAG</span></div>')
@@ -239,6 +291,12 @@ def build_demo() -> gr.Blocks:
             inputs=[q, chatbot, k_ask, docs, page, gemini_key_input],
             outputs=[chatbot, ask_raw, q],
             api_name="ask_chat",
+        )
+        send_btn.click(
+            fn=ask_chat,
+            inputs=[q, chatbot, k_ask, docs, page, gemini_key_input],
+            outputs=[chatbot, ask_raw, q],
+            api_name="ask_chat_button",
         )
         summary_panel.button.click(
             fn=summarize_documents,

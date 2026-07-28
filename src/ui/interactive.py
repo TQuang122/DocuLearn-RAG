@@ -15,6 +15,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.schemas import FlashcardSet, QuizSet
 
+
+def _attr_escape(s: str) -> str:
+    """Escape *s* for safe embedding in a single-quoted HTML attribute."""
+    return s.replace("&", "&amp;").replace("'", "&#39;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 # ---------------------------------------------------------------------------
 # Head script injected via gr.Blocks(head=…)  —  runs once on page load.
 # Uses a MutationObserver to detect dynamic HTML updates and initialise the
@@ -29,7 +35,7 @@ INTERACTIVE_HEAD_HTML = """<script>
 function _esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 // ==================== Flashcards ====================
-var _fcD = null, _fcI = 0, _fcF = false, _fcO = null, _fcK = null, _fcFilt = 0;
+var _fcD = null, _fcI = 0, _fcF = false, _fcO = null, _fcK = null, _fcR = null, _fcFilt = 0, _fcMode = 'learn';
 
 function _fcW() { return document.querySelector('.fc-card-wrapper'); }
 
@@ -41,8 +47,16 @@ function _fcShow(dir) {
   var pr = document.getElementById('fc-progress');
   if (ft) { ft.textContent = c.front; ft.style.animation = ''; void ft.offsetWidth; ft.style.animation = 'fc-slide-in ' + (dir || 'left') + ' 0.35s ease-out'; }
   if (bt) bt.textContent = c.back;
+  var sources = document.getElementById('fc-sources');
+  if (sources) {
+    sources.innerHTML = (c.sources || []).map(function(s) {
+      return '<details><summary>' + _esc(s.marker + ' · ' + s.filename + ' · p.' + s.page) + '</summary>' +
+        (s.text ? '<div>' + _esc(s.text) + '</div>' : '') + '</details>';
+    }).join('');
+  }
   if (hi) { hi.textContent = c.hint || ''; hi.style.opacity = '0'; setTimeout(function() { hi.style.opacity = '1'; }, 100); }
-  if (pr) pr.textContent = (_fcI + 1) + ' / ' + _fcD.length;
+  var mastered = _fcR.filter(function(r) { return r === 'got-it'; }).length;
+  if (pr) pr.textContent = 'Card ' + (_fcI + 1) + ' of ' + _fcD.length + ' · ' + mastered + ' mastered';
   var pn = document.getElementById('fc-prev'), nn = document.getElementById('fc-next');
   if (pn) pn.style.visibility = _fcI === 0 ? 'hidden' : 'visible';
   if (nn) nn.style.visibility = _fcI === _fcD.length - 1 ? 'hidden' : 'visible';
@@ -52,17 +66,14 @@ function _fcShow(dir) {
       return '<span class="fc-dot' + (i === _fcI ? ' fc-dot-active' : '') + '"></span>';
     }).join('');
   }
-  var mk = document.getElementById('fc-mastery');
-  if (mk) {
-    var kb = mk.querySelector('.fc-known-btn'), ub = mk.querySelector('.fc-unknown-btn');
-    if (_fcK[_fcO[_fcI]] === true) { if (kb) kb.classList.add('fc-active'); if (ub) ub.classList.remove('fc-active'); }
-    else if (_fcK[_fcO[_fcI]] === false) { if (ub) ub.classList.add('fc-active'); if (kb) kb.classList.remove('fc-active'); }
-    else { if (kb) kb.classList.remove('fc-active'); if (ub) ub.classList.remove('fc-active'); }
-  }
+  document.querySelectorAll('.fc-mode-btn').forEach(function(btn) {
+    btn.classList.toggle('fc-mode-active', btn.dataset.mode === _fcMode);
+    btn.setAttribute('aria-pressed', btn.dataset.mode === _fcMode ? 'true' : 'false');
+  });
+
   var w = _fcW();
   if (w && _fcF) { w.classList.remove('fc-flipped'); _fcF = false; }
-  var fb = document.getElementById('fc-filter-btn');
-  if (fb) { fb.textContent = _fcFilt === 1 ? 'Unknown' : 'All'; }
+
 }
 
 function _fcInit(root) {
@@ -70,10 +81,11 @@ function _fcInit(root) {
   if (!root) return;
   var raw = root.getAttribute('data-cards');
   if (!raw) return;
-  _fcD = JSON.parse(raw);
+  try { _fcD = JSON.parse(raw); } catch(e) { return; }
   _fcI = 0; _fcF = false;
   _fcO = _fcD.map(function(_, i) { return i; });
   _fcK = new Array(_fcD.length).fill(null);
+  _fcR = new Array(_fcD.length).fill(null);
   _fcFilt = 0;
   _fcShow('left');
 }
@@ -106,52 +118,112 @@ window.FC_SHUFFLE = function() {
   _fcI = 0; _fcF = false; var w = _fcW(); if (w) w.classList.remove('fc-flipped'); _fcShow('left');
 };
 
-window.FC_KNOWN = function() {
-  var ci = _fcO[_fcI];
-  if (_fcK[ci] === true) _fcK[ci] = null; else _fcK[ci] = true;
-  _fcShow();
+window.FC_RATE = function(value) {
+  if (!_fcF) return;
+  var originalIndex = _fcO[_fcI];
+  _fcR[originalIndex] = value;
+  _fcShow('left');
+  if (_fcI < _fcD.length - 1) { FC_NEXT(); }
+  else { FC_COMPLETE(); }
 };
 
-window.FC_UNKNOWN = function() {
-  var ci = _fcO[_fcI];
-  if (_fcK[ci] === false) _fcK[ci] = null; else _fcK[ci] = false;
-  _fcShow();
-};
-
-window.FC_FILTER = function() {
-  _fcFilt = _fcFilt === 1 ? 0 : 1;
-  if (_fcFilt === 1 && _fcK[_fcO[_fcI]] !== false) {
-    var ni; for (ni = 0; ni < _fcD.length; ni++) { if (_fcK[_fcO[ni]] === false) break; }
-    if (ni < _fcD.length) { _fcI = ni; _fcF = false; var w = _fcW(); if (w) w.classList.remove('fc-flipped'); _fcShow('right'); }
-    else { _fcFilt = 0; _fcShow(); }
-    return;
+window.FC_COMPLETE = function() {
+  var complete = document.getElementById('fc-complete');
+  var mastered = _fcR.filter(function(r) { return r === 'got-it'; }).length;
+  var difficult = _fcR.filter(function(r) { return r === 'again' || r === 'hard'; }).length;
+  if (complete) {
+    complete.style.display = 'block';
+    document.getElementById('fc-mastered-num').textContent = mastered;
+    document.getElementById('fc-difficult-num').textContent = difficult;
+    complete.scrollIntoView({behavior:'smooth',block:'center'});
   }
-  _fcShow();
 };
+
+window.FC_REVIEW = function() {
+  var review = _fcD.map(function(_, idx) { return idx; }).filter(function(idx) { return _fcR[idx] !== 'got-it'; });
+  if (!review.length) return;
+  _fcO = review; _fcI = 0; _fcF = false; _fcFilt = 0; _fcMode = 'review';
+  var complete = document.getElementById('fc-complete');
+  if (complete) complete.style.display = 'none';
+  _fcShow('left');
+};
+
+window.FC_RESTART = function() {
+  _fcO = _fcD.map(function(_, idx) { return idx; }); _fcI = 0; _fcF = false; _fcFilt = 0;
+  _fcR = new Array(_fcD.length).fill(null);
+  var complete = document.getElementById('fc-complete');
+  if (complete) complete.style.display = 'none';
+  var w = _fcW(); if (w) w.classList.remove('fc-flipped'); _fcShow('left');
+};
+
+window.FC_SET_MODE = function(mode) {
+  if (mode !== 'learn' && mode !== 'review' && mode !== 'shuffle' && mode !== 'exam') return;
+  _fcMode = mode;
+  if (mode === 'review') {
+    _fcO = _fcD.map(function(_, idx) { return idx; }).filter(function(idx) { return _fcR[idx] !== 'got-it'; });
+    if (!_fcO.length) _fcO = _fcD.map(function(_, idx) { return idx; });
+  } else {
+    _fcO = _fcD.map(function(_, idx) { return idx; });
+    if (mode === 'shuffle') FC_SHUFFLE();
+  }
+  _fcI = 0; _fcF = false; _fcFilt = 0;
+  var complete = document.getElementById('fc-complete');
+  if (complete) complete.style.display = 'none';
+  var w = _fcW(); if (w) w.classList.remove('fc-flipped'); _fcShow('left');
+};
+
+
 
 // ==================== Quiz ====================
-var _qD = null, _qDone = null, _qTC = 0, _qTW = 0, _qV = null;
+var _qD = null, _qOrder = null, _qDone = null, _qSel = null, _qI = 0, _qTC = 0, _qTW = 0, _qV = null, _qMode = 'practice';
 var _qL = ['A','B','C','D'];
 var _qSVG_OK = '<svg class="iq-verdict-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
 var _qSVG_BAD = '<svg class="iq-verdict-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
 
 function _qRender() {
   var c = document.getElementById('iq-list'); if (!c) return;
-  var h = '';
-  for (var i = 0; i < _qD.length; i++) { var q = _qD[i];
-    h += '<div class="iq-card" style="animation-delay:' + (i * 100) + 'ms">';
-    h += '<div class="iq-question">' + _esc(q.q) + '</div>';
-    h += '<div class="iq-options">';
-    for (var j = 0; j < q.opts.length; j++) {
-      h += '<div class="iq-option" data-i="' + i + '" data-j="' + j + '" onclick="IQ_ANSWER(this)">';
-      h += '<span class="iq-option-label">' + _qL[j] + '</span>';
-      h += '<span class="iq-option-text">' + _esc(q.opts[j]) + '</span></div>';
-    }
-    h += '</div>';
-    h += '<div class="iq-explain" id="iq-ex-' + i + '" style="display:none"></div>';
-    h += '</div>';
+  var i = _qOrder[_qI], q = _qD[i], answered = _qDone[i], h = '';
+  var complete = _qOrder.every(function(idx) { return _qDone[idx]; });
+  var showExplanation = answered && (_qMode === 'practice' || complete);
+  h += '<div class="iq-card" style="animation-delay:0ms">';
+  h += '<div class="iq-question"><span class="iq-question-index">' + (i + 1) + '</span>';
+  if (q.difficulty) h += '<span class="iq-difficulty">' + _esc(q.difficulty) + '</span>';
+  h += _esc(q.q) + '</div>';
+  h += '<div class="iq-options">';
+  for (var j = 0; j < q.opts.length; j++) {
+    var state = answered ? (j === q.correct ? ' iq-correct' : j === _qSel[i] ? ' iq-wrong' : '') : '';
+    h += '<div class="iq-option' + state + (answered ? ' iq-disabled' : '') + '" data-i="' + i + '" data-j="' + j + '" onclick="IQ_ANSWER(this)">';
+    h += '<span class="iq-option-label">' + _qL[j] + '</span>';
+    h += '<span class="iq-option-text">' + _esc(q.opts[j]) + '</span></div>';
   }
+  h += '</div>';
+  h += '<div class="iq-explain" id="iq-ex-' + i + '" style="display:' + (showExplanation ? 'block' : 'none') + '">';
+  if (showExplanation) {
+    h += '<strong>' + (q.correct === _qSel[i] ? 'Correct' : 'Review this answer') + '</strong><br>' + _esc(q.explanation);
+    if (q.sources && q.sources.length) {
+      h += '<div class="iq-sources"><span class="iq-sources-label">Sources</span>';
+      q.sources.forEach(function(s) {
+        h += '<details><summary>' + _esc(s.marker + ' · ' + s.filename + ' · p.' + s.page) + '</summary>';
+        if (s.text) h += '<div>' + _esc(s.text) + '</div>';
+        h += '</details>';
+      });
+      h += '</div>';
+    }
+  }
+  h += '</div></div>';
   c.innerHTML = h;
+  var prev = document.getElementById('iq-prev'), next = document.getElementById('iq-next');
+  if (prev) prev.disabled = i === 0;
+  if (next) { next.disabled = !answered; next.textContent = _qI === _qOrder.length - 1 ? 'See score' : 'Next question'; }
+  var ct = document.getElementById('iq-counter');
+  var answeredCount = _qOrder.filter(function(idx) { return _qDone[idx]; }).length;
+  if (ct) ct.textContent = 'Question ' + (_qI + 1) + ' of ' + _qOrder.length + ' · ' + answeredCount + ' answered';
+  var fill = document.getElementById('iq-fill');
+  if (fill) fill.style.width = Math.round(answeredCount / _qOrder.length * 100) + '%';
+  document.querySelectorAll('.iq-mode-btn').forEach(function(btn) {
+    btn.classList.toggle('iq-mode-active', btn.dataset.mode === _qMode);
+    btn.setAttribute('aria-pressed', btn.dataset.mode === _qMode ? 'true' : 'false');
+  });
 }
 
 function _qInit(root) {
@@ -159,8 +231,9 @@ function _qInit(root) {
   if (!root) return;
   var raw = root.getAttribute('data-quiz');
   if (!raw) return;
-  _qD = JSON.parse(raw);
-  _qDone = new Array(_qD.length).fill(false);
+  try { _qD = JSON.parse(raw); } catch(e) { return; }
+  _qOrder = _qD.map(function(_, idx) { return idx; });
+  _qDone = new Array(_qD.length).fill(false); _qSel = new Array(_qD.length).fill(null); _qI = 0;
   _qTC = 0; _qTW = 0;
   _qV = new Array(_qD.length).fill(false);
   _qRender();
@@ -169,28 +242,16 @@ function _qInit(root) {
 window.IQ_ANSWER = function(el) {
   var i = parseInt(el.dataset.i), j = parseInt(el.dataset.j); var q = _qD[i];
   var ops = document.querySelectorAll('.iq-option[data-i="' + i + '"]');
-  if (ops[0] && ops[0].classList.contains('iq-disabled')) return;
-  ops.forEach(function(o) { o.classList.add('iq-disabled'); });
-  if (j === q.correct) { el.classList.add('iq-correct'); _qTC++; }
-  else { el.classList.add('iq-wrong'); ops[q.correct].classList.add('iq-correct'); _qTW++; }
+  if (_qDone[i] || (ops[0] && ops[0].classList.contains('iq-disabled'))) return;
+  _qSel[i] = j;
+  if (j === q.correct) { _qTC++; }
+  else { _qTW++; }
   _qV[i] = j === q.correct;
   _qDone[i] = true;
-  var ex = document.getElementById('iq-ex-' + i);
-  if (ex) {
-    var ok = j === q.correct;
-    var verdictClass = ok ? 'iq-verdict-correct' : 'iq-verdict-wrong';
-    ex.innerHTML = '<div class="' + verdictClass + '" style="margin-bottom:6px">' +
-      (ok ? _qSVG_OK : _qSVG_BAD) + ' ' + (ok ? 'Correct' : 'Wrong') + '</div>' +
-      '<strong>' + _qL[q.correct] + '. ' + _esc(q.opts[q.correct]) + '</strong><br>' +
-      _esc(q.explanation);
-    ex.style.display = 'block';
-  }
-  var ans = _qDone.filter(Boolean).length;
-  var ct = document.getElementById('iq-counter');
-  if (ct) ct.textContent = ans + ' / ' + _qD.length + ' answered';
-  var fill = document.getElementById('iq-fill');
-  if (fill) fill.style.width = Math.round(ans / _qD.length * 100) + '%';
-  if (ans === _qD.length) {
+  _qRender();
+  var ans = _qOrder.filter(function(idx) { return _qDone[idx]; }).length;
+  var total = _qOrder.length;
+  if (ans === total) {
     setTimeout(function() {
       var sc = document.getElementById('iq-score');
       if (sc) {
@@ -205,15 +266,18 @@ window.IQ_ANSWER = function(el) {
         var ring = document.getElementById('iq-ring-fill');
         if (ring) {
           var circ = 326.73;
-          ring.style.strokeDashoffset = circ * (1 - target / _qD.length);
+          ring.style.strokeDashoffset = circ * (1 - target / total);
         }
         document.getElementById('iq-correct-num').textContent = _qTC;
         document.getElementById('iq-wrong-num').textContent = _qTW;
+        document.getElementById('iq-score-total').textContent = '/ ' + total;
+        document.getElementById('iq-accuracy').textContent = Math.round(_qTC / total * 100) + '% accuracy';
         var strip = document.getElementById('iq-verdict-strip');
         if (strip) {
           var vh = '';
-          for (var vi = 0; vi < _qV.length; vi++) {
-            vh += '<span class="iq-vdot ' + (_qV[vi] ? 'iq-vdot-correct' : 'iq-vdot-wrong') + '" data-i="' + vi + '" onclick="IQ_SCROLL_TO(' + vi + ')"></span>';
+          for (var vi = 0; vi < _qOrder.length; vi++) {
+            var originalIndex = _qOrder[vi];
+            vh += '<span class="iq-vdot ' + (_qV[originalIndex] ? 'iq-vdot-correct' : 'iq-vdot-wrong') + '" data-i="' + originalIndex + '" onclick="IQ_SCROLL_TO(' + originalIndex + ')"></span>';
           }
           strip.innerHTML = vh;
         }
@@ -222,28 +286,54 @@ window.IQ_ANSWER = function(el) {
         sc.scrollIntoView({behavior:'smooth',block:'center'});
       }
     }, 600);
-  } else {
-    var cards = document.querySelectorAll('.iq-card');
-    for (var k = i + 1; k < _qD.length; k++) {
-      if (!_qDone[k] && cards[k]) {
-        cards[k].scrollIntoView({behavior:'smooth',block:'center'}); break;
-      }
-    }
   }
 };
 
+window.IQ_PREV = function() {
+  if (_qI <= 0) return;
+  _qI--; _qRender();
+};
+
+window.IQ_NEXT = function() {
+  if (!_qDone[_qOrder[_qI]]) return;
+  if (_qI === _qOrder.length - 1) {
+    var sc = document.getElementById('iq-score');
+    if (sc) sc.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  _qI++; _qRender();
+};
+
+window.IQ_RETRY_INCORRECT = function() {
+  var wrong = _qOrder.filter(function(idx) { return !_qV[idx]; });
+  if (!wrong.length) return;
+  _qOrder = wrong;
+  _qOrder.forEach(function(idx) { _qDone[idx] = false; _qSel[idx] = null; });
+  _qI = 0; _qTC = 0; _qTW = 0;
+  var sc = document.getElementById('iq-score');
+  if (sc) sc.style.display = 'none';
+  _qRender();
+};
+
+window.IQ_SET_MODE = function(mode) {
+  if (mode !== 'practice' && mode !== 'exam') return;
+  _qMode = mode; _qRender();
+};
+
 window.IQ_SCROLL_TO = function(i) {
-  var cards = document.querySelectorAll('.iq-card');
-  if (cards[i]) cards[i].scrollIntoView({behavior:'smooth',block:'center'});
+  var target = _qOrder.indexOf(i);
+  if (target < 0) return;
+  _qI = target; _qRender();
 };
 
 window.IQ_RESTART = function() {
-  _qDone = new Array(_qD.length).fill(false); _qTC = 0; _qTW = 0;
+  _qOrder = _qD.map(function(_, idx) { return idx; });
+  _qDone = new Array(_qD.length).fill(false); _qSel = new Array(_qD.length).fill(null); _qI = 0; _qTC = 0; _qTW = 0;
   _qV = new Array(_qD.length).fill(false);
   var sc = document.getElementById('iq-score');
   if (sc) sc.style.display = 'none';
   var ct = document.getElementById('iq-counter');
-  if (ct) ct.textContent = '0 / ' + _qD.length + ' answered';
+  if (ct) ct.textContent = 'Question 1 of ' + _qD.length + ' · 0 answered';
   var fill = document.getElementById('iq-fill');
   if (fill) fill.style.width = '0%';
   _qRender();
@@ -251,12 +341,24 @@ window.IQ_RESTART = function() {
 
 // ==================== Keyboard ====================
 document.addEventListener('keydown', function(e) {
-  if (!document.querySelector('.fc-root')) return;
+  var hasFc = document.querySelector('.fc-root');
+  var hasIq = document.querySelector('.iq-root');
+  if (!hasFc && !hasIq) return;
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if (e.key === 'ArrowLeft') { FC_PREV(); }
-  else if (e.key === 'ArrowRight') { FC_NEXT(); }
-  else if (e.key === ' ') { e.preventDefault(); FC_FLIP(); }
-  else if (e.key === 'f' || e.key === 'F') { FC_FILTER(); }
+  if (hasFc) {
+    if (e.key === 'ArrowLeft') { FC_PREV(); }
+    else if (e.key === 'ArrowRight') { FC_NEXT(); }
+    else if (e.key === ' ') { e.preventDefault(); FC_FLIP(); }
+    else if (e.key === '1') { FC_RATE('again'); }
+    else if (e.key === '2') { FC_RATE('hard'); }
+    else if (e.key === '3') { FC_RATE('got-it'); }
+  }
+  if (hasIq) {
+    if (/^[1-4]$/.test(e.key)) {
+      var option = document.querySelector('.iq-option[data-i="' + _qOrder[_qI] + '"][data-j="' + (Number(e.key) - 1) + '"]');
+      if (option) option.click();
+    } else if (e.key === 'Enter') { IQ_NEXT(); }
+  }
 });
 
 // ==================== MutationObserver ====================
@@ -293,12 +395,27 @@ def render_quiz_html(quiz_set: QuizSet) -> str:
     if not quiz_set.items:
         return '<div class="iq-root iq-empty">No questions available.</div>'
 
+    citation_map = {
+        citation.source_marker: {
+            "marker": citation.source_marker,
+            "filename": citation.filename,
+            "page": citation.page,
+            "text": citation.source_text or "",
+        }
+        for citation in quiz_set.citations
+    }
     data = [
         {
             "q": item.question,
             "opts": item.options,
             "correct": item.correct_index,
             "explanation": item.explanation or "No explanation provided.",
+            "difficulty": item.difficulty or "",
+            "sources": [
+                citation_map[marker]
+                for marker in item.source_markers
+                if marker in citation_map
+            ],
         }
         for item in quiz_set.items
     ]
@@ -321,31 +438,46 @@ def render_quiz_html(quiz_set: QuizSet) -> str:
         '<line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
     )
 
-    return f"""<div class="iq-root" data-quiz='{data_json}'>
+    return f"""<div class="iq-root" data-quiz='{_attr_escape(data_json)}'>
 <div class="iq-header">
   <span class="iq-scope">{scope_escaped}</span>
   <span class="iq-counter" id="iq-counter">0 / {len(data)} answered</span>
+</div>
+<div class="iq-modebar">
+  <span class="iq-mode-label">Mode</span>
+  <button class="iq-mode-btn iq-mode-active" data-mode="practice" aria-pressed="true" onclick="IQ_SET_MODE('practice')">Practice</button>
+  <button class="iq-mode-btn" data-mode="exam" aria-pressed="false" onclick="IQ_SET_MODE('exam')">Exam</button>
+  <span class="iq-shortcuts">1–4 answer · Enter next</span>
 </div>
 <div class="iq-progress-track">
   <div class="iq-progress-fill" id="iq-fill" style="width:0%"></div>
 </div>
 <div class="iq-list" id="iq-list"></div>
+<div class="iq-nav">
+  <button id="iq-prev" onclick="IQ_PREV()" disabled>Previous</button>
+  <button id="iq-next" class="iq-next-btn" onclick="IQ_NEXT()" disabled>Next question</button>
+</div>
 <div class="iq-score" id="iq-score" style="display:none">
+  <div class="iq-score-kicker">Quiz complete</div>
   <div class="iq-score-ring">
     <svg width="120" height="120" viewBox="0 0 120 120">
       <circle class="iq-ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="8"/>
       <circle class="iq-ring-fill" id="iq-ring-fill" cx="60" cy="60" r="52" fill="none" stroke-width="8" stroke-dasharray="326.73" stroke-dashoffset="326.73" transform="rotate(-90 60 60)" stroke-linecap="round"/>
     </svg>
     <div class="iq-score-num" id="iq-score-num">0</div>
-    <div class="iq-score-total">/ {len(data)}</div>
+    <div class="iq-score-total" id="iq-score-total">/ {len(data)}</div>
   </div>
   <div class="iq-score-label">Your Score</div>
+  <div class="iq-accuracy" id="iq-accuracy">0% accuracy</div>
   <div class="iq-score-detail">
     <span class="iq-verdict-correct">{SVG_OK} <span id="iq-correct-num">0</span> correct</span>
     <span class="iq-verdict-wrong">{SVG_BAD} <span id="iq-wrong-num">0</span> wrong</span>
   </div>
   <div class="iq-verdict-strip" id="iq-verdict-strip"></div>
-  <button class="iq-score-btn" onclick="IQ_RESTART()">Try Again</button>
+  <div class="iq-score-actions">
+    <button class="iq-score-btn iq-retry-btn" onclick="IQ_RETRY_INCORRECT()">Retry incorrect</button>
+    <button class="iq-score-btn" onclick="IQ_RESTART()">Restart quiz</button>
+  </div>
 </div>
 </div>"""
 
@@ -360,7 +492,28 @@ def render_flashcard_html(flashcard_set: FlashcardSet) -> str:
     if not flashcard_set.cards:
         return '<div class="fc-root fc-empty">No cards available.</div>'
 
-    data = [{"front": c.front, "back": c.back, "hint": c.hint or ""} for c in flashcard_set.cards]
+    citation_map = {
+        citation.source_marker: {
+            "marker": citation.source_marker,
+            "filename": citation.filename,
+            "page": citation.page,
+            "text": citation.source_text or "",
+        }
+        for citation in flashcard_set.citations
+    }
+    data = [
+        {
+            "front": card.front,
+            "back": card.back,
+            "hint": card.hint or "",
+            "sources": [
+                citation_map[marker]
+                for marker in card.source_markers
+                if marker in citation_map
+            ],
+        }
+        for card in flashcard_set.cards
+    ]
     data_json = json.dumps(data, ensure_ascii=False)
     scope_escaped = html_mod.escape(
         f"{flashcard_set.scope}: {flashcard_set.target}"
@@ -389,7 +542,7 @@ def render_flashcard_html(flashcard_set: FlashcardSet) -> str:
         '<line x1="4" y1="4" x2="9" y2="9"/></svg>'
     )
 
-    return f"""<div class="fc-root" data-cards='{data_json}'>
+    return f"""<div class="fc-root" data-cards='{_attr_escape(data_json)}'>
 <div class="fc-header">
   <span class="fc-scope">{scope_escaped}</span>
   <span class="fc-progress" id="fc-progress">1 / {len(data)}</span>
@@ -397,19 +550,26 @@ def render_flashcard_html(flashcard_set: FlashcardSet) -> str:
 <div class="fc-card-wrapper" onclick="FC_FLIP()">
   <div class="fc-card-inner" id="fc-inner">
     <div class="fc-face" id="fc-front"><h3>Question</h3><p id="fc-front-text"></p><span class="fc-flip-hint">Tap to reveal</span></div>
-    <div class="fc-face fc-back" id="fc-back"><h3>Answer</h3><p id="fc-back-text"></p></div>
+    <div class="fc-face fc-back" id="fc-back"><h3>Answer</h3><p id="fc-back-text"></p><div class="fc-sources" id="fc-sources"></div></div>
   </div>
 </div>
 <div class="fc-dots" id="fc-dots"></div>
 <div class="fc-hint" id="fc-hint"></div>
-<div class="fc-mastery" id="fc-mastery">
-  <button class="fc-known-btn" onclick="FC_KNOWN()">Got it</button>
-  <button class="fc-unknown-btn" onclick="FC_UNKNOWN()">Still learning</button>
-</div>
 <div class="fc-nav">
   <button id="fc-prev" onclick="FC_PREV()">{SVG_PREV} Prev</button>
   <button class="fc-shuffle-btn" onclick="FC_SHUFFLE()">{SVG_SHUFFLE} Shuffle</button>
-  <button class="fc-filter-btn" id="fc-filter-btn" onclick="FC_FILTER()">All</button>
   <button id="fc-next" onclick="FC_NEXT()">Next {SVG_NEXT}</button>
+</div>
+<div class="fc-complete" id="fc-complete" style="display:none">
+  <div class="fc-complete-kicker">Deck complete</div>
+  <h3>Nice work. Keep the difficult cards warm.</h3>
+  <div class="fc-complete-stats">
+    <span><strong id="fc-mastered-num">0</strong><small>mastered</small></span>
+    <span><strong id="fc-difficult-num">0</strong><small>to review</small></span>
+  </div>
+  <div class="fc-complete-actions">
+    <button onclick="FC_REVIEW()">Review difficult cards</button>
+    <button onclick="FC_RESTART()">Restart deck</button>
+  </div>
 </div>
 </div>"""
