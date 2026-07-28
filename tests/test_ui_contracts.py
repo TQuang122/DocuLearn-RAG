@@ -223,6 +223,8 @@ def test_hero_typography_is_scoped_against_host_theme_overrides() -> None:
     assert "font-size: clamp(2.5rem, 5.6vw, 4.5rem) !important" in CSS
     assert ".gradio-container .eyebrow" in CSS
     assert "background-image: none !important" in CSS
+    assert "#root > div" in CSS
+    assert "body::before" in CSS
 
 
 def test_flashcard_surface_keeps_navigation_controls_only() -> None:
@@ -401,7 +403,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "b4d80dd6031f32a911c99df237fd96ae7a203181a2078e0a5fdd3e3398df22c1"
+    assert digest == "ec5123dbf63bbc368dda08db9606ae3a0035a9e422eac29d3680846323fc4114"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

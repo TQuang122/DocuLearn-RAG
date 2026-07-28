@@ -2395,6 +2395,20 @@ body {
   background-image: none !important;
 }
 
+html,
+body,
+#root,
+#root > div {
+  background-color: var(--surface-canvas) !important;
+  background-image: none !important;
+}
+
+body::before,
+body::after {
+  display: none !important;
+  content: none !important;
+}
+
 .gradio-container .hero-shell,
 .gradio-container .hero-copy,
 .gradio-container .hero-copy h1,
