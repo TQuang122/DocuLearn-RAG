@@ -114,6 +114,30 @@ def pages_for_selection(doc_map: dict[str, Any], selected: list[str]) -> dict[st
     )
 
 
+def scope_summary_html(selected: list[str] | None, page: str | None) -> str:
+    names = [str(name) for name in (selected or []) if str(name).strip()]
+    if not names:
+        return (
+            '<div class="scope-summary scope-summary-empty">'
+            '<span class="scope-summary-status">Waiting for scope</span>'
+            '<span>Select an indexed document to start learning.</span>'
+            "</div>"
+        )
+    visible_names = ", ".join(html.escape(name, quote=False) for name in names[:2])
+    if len(names) > 2:
+        visible_names += f" and {len(names) - 2} more"
+    page_label = html.escape(str(page or "All pages"), quote=False)
+    document_label = "document" if len(names) == 1 else "documents"
+    return (
+        '<div class="scope-summary" aria-live="polite">'
+        '<span class="scope-summary-status scope-summary-ready">Indexed &amp; ready</span>'
+        f'<strong>{len(names)} {document_label}</strong>'
+        f'<span class="scope-summary-files">{visible_names}</span>'
+        f'<span class="scope-summary-page">Page: {page_label}</span>'
+        "</div>"
+    )
+
+
 def upload_pdf(
     file: object | None,
 ) -> tuple[str, dict[str, Any], dict[str, dict[str, object]], dict[str, Any], str, str]:

@@ -11,6 +11,7 @@ from src.ui.uploads import (
     pages_for_selection,
     read_uploaded_pdfs,
     refresh_docs,
+    scope_summary_html,
     upload_pdf,
 )
 
@@ -61,8 +62,8 @@ def test_demo_keeps_learning_event_contract() -> None:
         if dependency["backend_fn"]
     }
 
-    assert len(config["components"]) == 101
-    assert len(config["dependencies"]) == 17
+    assert len(config["components"]) == 102
+    assert len(config["dependencies"]) == 22
     assert contracts["refresh_documents"] == (0, 5)
     assert contracts["pages_for_selection"] == (2, 1)
     assert contracts["upload_pdf"] == (1, 6)
@@ -76,6 +77,11 @@ def test_demo_keeps_learning_event_contract() -> None:
     assert contracts["prepare_delete"] == (1, 5)
     assert contracts["reset_delete_confirmation"] == (0, 5)
     assert contracts["reset_delete_confirmation_1"] == (0, 5)
+    assert contracts["scope_summary_refresh"] == (2, 1)
+    assert contracts["scope_summary_selection"] == (2, 1)
+    assert contracts["scope_summary_upload"] == (2, 1)
+    assert contracts["scope_summary"] == (2, 1)
+    assert contracts["scope_summary_after_delete"] == (2, 1)
     assert contracts["lambda"] == (1, 1)
     assert contracts["lambda_1"] == (1, 1)
     assert contracts["lambda_2"] == (1, 1)
@@ -147,6 +153,15 @@ def test_delete_confirmation_escapes_names_and_preserves_restore_path() -> None:
     assert cancel["visible"] is True
     assert delete["visible"] is False
     assert actions["visible"] is True
+
+
+def test_scope_summary_shows_active_documents_page_and_ready_state() -> None:
+    summary = scope_summary_html(["notes.pdf", "paper.pdf"], "3")
+
+    assert "Indexed &amp; ready" in summary
+    assert "2 documents" in summary
+    assert "notes.pdf, paper.pdf" in summary
+    assert "Page: 3" in summary
 
 
 def test_upload_dropzone_keeps_internal_icon_buttons_scoped() -> None:
@@ -463,7 +478,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "55e1a75fdea3713501f288e6facea4562bb231bc70ba9691f11a755d7a015ba9"
+    assert digest == "7eebacda76a41450264b6b6700e7388b6a08389686ee68dd057606b4bb19ea0a"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

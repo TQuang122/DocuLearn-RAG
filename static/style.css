@@ -2603,11 +2603,69 @@ body::after {
   font-size: 0.6875rem !important;
 }
 
+.gradio-container .scope-summary-shell {
+  margin: 0 0 var(--space-4) !important;
+}
+
+.gradio-container .scope-summary {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-card) !important;
+  color: var(--text-secondary) !important;
+  background: linear-gradient(135deg, var(--accent-wash), transparent 62%), var(--surface-input) !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.4 !important;
+}
+
+.gradio-container .scope-summary-status {
+  color: var(--text-tertiary) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.6875rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase;
+}
+
+.gradio-container .scope-summary-ready {
+  color: var(--status-success) !important;
+}
+
+.gradio-container .scope-summary strong {
+  color: var(--text-primary) !important;
+  font-weight: 590 !important;
+}
+
+.gradio-container .scope-summary-files,
+.gradio-container .scope-summary-page {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gradio-container .scope-summary-page {
+  color: var(--text-tertiary) !important;
+}
+
+.gradio-container .hero-shell {
+  min-height: 320px !important;
+  padding-top: var(--space-12) !important;
+  padding-bottom: var(--space-10) !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .hero-shell {
     grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.55fr);
     min-height: 360px;
+  }
+
+  .gradio-container .hero-shell {
+    min-height: 290px !important;
   }
 
   .main-layout {
@@ -2620,6 +2678,12 @@ body::after {
 }
 
 @media (max-width: 768px) {
+  .gradio-container .hero-shell {
+    min-height: auto !important;
+    padding-top: var(--space-12) !important;
+    padding-bottom: var(--space-10) !important;
+  }
+
   .gradio-container {
     padding-inline: var(--space-4) !important;
   }

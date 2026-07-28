@@ -27,7 +27,7 @@ from src.ui.content import (
 )
 from src.ui.feature_panel import build_feature_panel
 from src.ui.helpers import export_download, status_html
-from src.ui.uploads import pages_for_selection, refresh_docs, upload_pdf
+from src.ui.uploads import pages_for_selection, refresh_docs, scope_summary_html, upload_pdf
 
 
 def build_demo() -> gr.Blocks:
@@ -157,6 +157,10 @@ def build_demo() -> gr.Blocks:
                     elem_classes="library-file-index",
                 )
 
+        scope_summary = gr.HTML(
+            scope_summary_html([], "All pages"),
+            elem_classes="scope-summary-shell",
+        )
         with gr.Tabs(selected="qa", elem_classes="learning-tabs") as _learning_tabs:
             with gr.Tab(
                 "Q&A",
@@ -280,18 +284,39 @@ def build_demo() -> gr.Blocks:
             inputs=[],
             outputs=[docs, doc_map_state, page, doc_summary, doc_list_md],
             api_name="refresh_documents",
+        ).then(
+            fn=scope_summary_html,
+            inputs=[docs, page],
+            outputs=[scope_summary],
+            api_name="scope_summary_refresh",
         )
         docs.change(
             fn=pages_for_selection,
             inputs=[doc_map_state, docs],
             outputs=[page],
             api_name="pages_for_selection",
+        ).then(
+            fn=scope_summary_html,
+            inputs=[docs, page],
+            outputs=[scope_summary],
+            api_name="scope_summary_selection",
         )
         upload_btn.click(
             fn=upload_pdf,
             inputs=[upload],
             outputs=[upload_status, docs, doc_map_state, page, doc_summary, doc_list_md],
             api_name="upload_pdf",
+        ).then(
+            fn=scope_summary_html,
+            inputs=[docs, page],
+            outputs=[scope_summary],
+            api_name="scope_summary_upload",
+        )
+        page.change(
+            fn=scope_summary_html,
+            inputs=[docs, page],
+            outputs=[scope_summary],
+            api_name="scope_summary",
         )
         delete_btn.click(
             fn=prepare_delete,
@@ -314,6 +339,11 @@ def build_demo() -> gr.Blocks:
             fn=refresh_docs,
             inputs=[],
             outputs=[docs, doc_map_state, page, doc_summary, doc_list_md],
+        ).then(
+            fn=scope_summary_html,
+            inputs=[docs, page],
+            outputs=[scope_summary],
+            api_name="scope_summary_after_delete",
         ).then(
             fn=reset_delete_confirmation,
             inputs=[],
