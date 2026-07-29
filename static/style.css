@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=optional");
 
 :root,
 :root.dark,
@@ -86,6 +86,8 @@ body {
   margin: 0;
   font-family: var(--font-sans) !important;
   font-feature-settings: "cv01" 1, "ss03" 1;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   color: var(--text-primary) !important;
   background-color: var(--surface-canvas) !important;
 }
@@ -117,7 +119,7 @@ body {
 }
 
 #doculearn-app,
-#doculearn-app.gradio-container {
+.gradio-container {
   --font-sans: "Inter Variable", "Inter", "SF Pro Display", -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   --font-mono: "Berkeley Mono", "SFMono-Regular", Menlo, monospace !important;
@@ -176,7 +178,8 @@ body {
   isolation: isolate;
 }
 
-#doculearn-app.gradio-container {
+#doculearn-app,
+.gradio-container {
   width: min(100%, var(--content-max)) !important;
   max-width: var(--content-max) !important;
   margin-inline: auto !important;
@@ -184,20 +187,31 @@ body {
 }
 
 #doculearn-app,
-#doculearn-app * {
+#doculearn-app *,
+.gradio-container,
+.gradio-container * {
   font-family: var(--font-sans) !important;
 }
 
 #doculearn-app code,
 #doculearn-app pre,
 #doculearn-app .font-mono,
-#doculearn-app [data-testid="number-input"] input {
+#doculearn-app [data-testid="number-input"] input,
+.gradio-container code,
+.gradio-container pre,
+.gradio-container .font-mono,
+.gradio-container [data-testid="number-input"] input {
   font-family: var(--font-mono) !important;
 }
 
 html body #root > #doculearn-app,
+html body #root > div > .gradio-container,
 html body #root > #doculearn-app::before,
-html body #root > #doculearn-app::after {
+html body #root > #doculearn-app::after,
+html body #root > div > .gradio-container::before,
+html body #root > div > .gradio-container::after,
+.gradio-container::before,
+.gradio-container::after {
   background-color: var(--surface-canvas) !important;
   background-image: none !important;
 }
@@ -240,6 +254,8 @@ html body #root > #doculearn-app::after {
 .brand-shell {
   position: relative;
   z-index: 2;
+  min-height: 456px;
+  contain: layout;
 }
 
 .product-header {
@@ -247,6 +263,8 @@ html body #root > #doculearn-app::after {
   align-items: center;
   justify-content: space-between;
   min-height: 68px;
+  height: 68px;
+  flex: 0 0 68px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -313,6 +331,7 @@ html body #root > #doculearn-app::after {
   gap: var(--space-10);
   align-items: center;
   min-height: 410px;
+  contain: layout paint;
   padding: var(--space-16) 0 var(--space-12);
 }
 
@@ -357,6 +376,7 @@ html body #root > #doculearn-app::after {
   position: relative;
   display: grid;
   min-height: 280px;
+  height: 280px;
   place-items: center;
   isolation: isolate;
 }
@@ -1146,7 +1166,7 @@ html body #root > #doculearn-app::after {
   color: var(--text-primary) !important;
 }
 
-.source-file-picker .icon-button-wrapper button[aria-label="Click to upload or drop files"] {
+.source-file-picker .icon-button-wrapper button[aria-label*="upload" i] {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -1448,7 +1468,8 @@ html body #root > #doculearn-app::after {
 
 .gradio-container .learning-tabs .tab-container[role="tablist"] button {
   flex: 0 1 auto !important;
-  min-height: 40px !important;
+  min-height: 44px !important;
+  height: 44px !important;
   padding: 0 16px !important;
   border: 1px solid transparent !important;
   border-radius: 8px !important;
@@ -1555,6 +1576,8 @@ html body #root > #doculearn-app::after {
   .gradio-container .learning-tabs .tab-container[role="tablist"] button {
     flex: 1 1 0% !important;
     min-width: 0 !important;
+    min-height: 44px !important;
+    height: 44px !important;
     padding: 0 8px !important;
     font-size: 0.75rem !important;
     gap: 4px !important;
@@ -2769,6 +2792,13 @@ body::after {
   padding-bottom: var(--space-10) !important;
 }
 
+@media (min-width: 1025px) {
+  .gradio-container .hero-shell {
+    height: 368px !important;
+    min-height: 368px !important;
+  }
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .hero-shell {
@@ -2778,6 +2808,10 @@ body::after {
 
   .gradio-container .hero-shell {
     min-height: 290px !important;
+  }
+
+  .brand-shell {
+    min-height: 456px;
   }
 
   .main-layout {
@@ -2802,6 +2836,8 @@ body::after {
 
   .product-header {
     min-height: 60px;
+    height: 60px;
+    flex-basis: 60px;
   }
 
   .header-status {
@@ -2814,12 +2850,17 @@ body::after {
     padding: var(--space-12) 0 var(--space-10);
   }
 
+  .brand-shell {
+    min-height: 0;
+  }
+
   .hero-copy h1 {
     font-size: clamp(2.35rem, 11vw, 3.6rem);
   }
 
   .hero-visual {
     min-height: 230px;
+    height: 230px;
   }
 
   .document-stack {
@@ -2873,6 +2914,7 @@ body::after {
 
   .hero-visual {
     min-height: 205px;
+    height: 205px;
   }
 
   .workflow-strip,

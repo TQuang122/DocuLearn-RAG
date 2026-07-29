@@ -7,6 +7,7 @@ import pytest
 
 from src.ui.content import BRAND_HEADER_HTML
 from src.ui.helpers import CSS
+from src.ui.interactive import INTERACTIVE_HEAD_HTML
 from src.ui.uploads import (
     pages_for_selection,
     read_uploaded_pdfs,
@@ -91,13 +92,23 @@ def test_demo_isolated_from_host_theme_css() -> None:
     from app import demo
 
     assert demo.elem_id == "doculearn-app"
-    assert "#doculearn-app.gradio-container" in CSS
+    assert ".gradio-container {" in CSS
     assert "isolation: isolate" in CSS
     assert "html body #root > #doculearn-app::before" in CSS
     assert "--spacing-xxl: 16px !important" in CSS
     assert "margin-inline: auto !important" in CSS
     assert ".gradio-container .panel-heading h2" in CSS
     assert "font-size: 1.25rem !important" in CSS
+    assert ".gradio-container *" in CSS
+    assert "#doculearn-app,\n.gradio-container" in CSS
+    assert "display=optional" in CSS
+    assert ".product-header" in CSS and "height: 68px" in CSS
+    assert "height: 368px !important" in CSS
+    assert "min-height: 456px" in CSS
+    assert "_syncAccessibility" in INTERACTIVE_HEAD_HTML
+    assert 'data-doculearn-tabindex' in INTERACTIVE_HEAD_HTML
+    assert 'source-file-picker button[aria-label*="upload" i]' in INTERACTIVE_HEAD_HTML
+    assert "attributeFilter: ['aria-hidden']" in INTERACTIVE_HEAD_HTML
 
 
 def test_setup_accordions_share_one_scoped_component_style() -> None:
@@ -186,6 +197,8 @@ def test_upload_dropzone_keeps_internal_icon_buttons_scoped() -> None:
 def test_learning_tabs_target_gradio_six_tablist_dom() -> None:
     assert ".learning-tabs .tab-nav" not in CSS
     assert '.learning-tabs .tab-container[role="tablist"] button' in CSS
+    assert "min-height: 44px !important" in CSS
+    assert "height: 44px !important" in CSS
     assert 'button[data-tab-id="flashcards"]::before' in CSS
     assert ".qa-tab.qa-stage" in CSS
     assert '[aria-label*="delete" i]' in CSS
@@ -491,7 +504,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "d10c3ead23a7a2298e2907e783b52f848296f1e41c8de5600b5c78125dfe8995"
+    assert digest == "e1b9f2151d5e40bfa1449b2d23bf61c30debc57a33f5f5985026fe2542a757a2"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

@@ -34,6 +34,32 @@ INTERACTIVE_HEAD_HTML = """<script>
 // ----- helpers -----
 function _esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+function _syncAccessibility() {
+  document.querySelectorAll(
+    '[aria-hidden="true"] button, [aria-hidden="true"] a, ' +
+    '[aria-hidden="true"] input, [aria-hidden="true"] textarea, ' +
+    '[aria-hidden="true"] select, [aria-hidden="true"] [role="button"]'
+  ).forEach(function(el) {
+    if (!el.hasAttribute('data-doculearn-tabindex')) {
+      el.setAttribute('data-doculearn-tabindex', el.getAttribute('tabindex') || '');
+    }
+    el.setAttribute('tabindex', '-1');
+  });
+  document.querySelectorAll('[data-doculearn-tabindex]').forEach(function(el) {
+    if (el.closest('[aria-hidden="true"]')) return;
+    var original = el.getAttribute('data-doculearn-tabindex');
+    if (original) el.setAttribute('tabindex', original);
+    else el.removeAttribute('tabindex');
+    el.removeAttribute('data-doculearn-tabindex');
+  });
+  document.querySelectorAll(
+    '.source-file-picker button[aria-label*="upload" i]'
+  ).forEach(function(btn) {
+    var visibleLabel = (btn.textContent || '').replace(/\\s+/g, ' ').trim();
+    if (visibleLabel) btn.setAttribute('aria-label', visibleLabel);
+  });
+}
+
 // ==================== Flashcards ====================
 var _fcD = null, _fcI = 0, _fcF = false, _fcO = null, _fcK = null, _fcR = null, _fcFilt = 0, _fcMode = 'learn';
 
@@ -363,6 +389,7 @@ document.addEventListener('keydown', function(e) {
 
 // ==================== MutationObserver ====================
 var _obs = new MutationObserver(function(muts) {
+  _syncAccessibility();
   for (var mi = 0; mi < muts.length; mi++) {
     for (var ni = 0; ni < muts[mi].addedNodes.length; ni++) {
       var n = muts[mi].addedNodes[ni];
@@ -373,10 +400,16 @@ var _obs = new MutationObserver(function(muts) {
     }
   }
 });
-_obs.observe(document.body, { childList: true, subtree: true });
+_obs.observe(document.body, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['aria-hidden']
+});
 
 // ==================== Check existing ====================
 document.addEventListener('DOMContentLoaded', function() {
+  _syncAccessibility();
   var fcEl = document.querySelector('.fc-root'); if (fcEl) _fcInit(fcEl);
   var iqEl = document.querySelector('.iq-root'); if (iqEl) _qInit(iqEl);
 });
