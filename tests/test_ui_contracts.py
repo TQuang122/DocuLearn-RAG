@@ -105,6 +105,8 @@ def test_demo_isolated_from_host_theme_css() -> None:
     assert ".product-header" in CSS and "height: 68px" in CSS
     assert "height: 368px !important" in CSS
     assert "min-height: 456px" in CSS
+    assert ".gradio-container .hero-copy h1" in CSS
+    assert "margin: 0 !important" in CSS
     assert "_syncAccessibility" in INTERACTIVE_HEAD_HTML
     assert 'data-doculearn-tabindex' in INTERACTIVE_HEAD_HTML
     assert 'source-file-picker button[aria-label*="upload" i]' in INTERACTIVE_HEAD_HTML
@@ -504,7 +506,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "e1b9f2151d5e40bfa1449b2d23bf61c30debc57a33f5f5985026fe2542a757a2"
+    assert digest == "0ed43df00476feab417bc75589d16be00464ca09248b3eedb1731828c1b271f1"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

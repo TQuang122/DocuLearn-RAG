@@ -2588,6 +2588,7 @@ body::after {
 }
 
 .gradio-container .hero-copy h1 {
+  margin: 0 !important;
   color: var(--text-primary) !important;
   font-size: clamp(2.5rem, 5.6vw, 4.5rem) !important;
   font-weight: 510 !important;
