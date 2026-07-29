@@ -87,6 +87,17 @@ def test_demo_keeps_learning_event_contract() -> None:
     assert contracts["lambda_2"] == (1, 1)
 
 
+def test_demo_isolated_from_host_theme_css() -> None:
+    from app import demo
+
+    assert demo.elem_id == "doculearn-app"
+    assert "#doculearn-app.gradio-container" in CSS
+    assert "isolation: isolate" in CSS
+    assert "html body #root > #doculearn-app::before" in CSS
+    assert "--spacing-xxl: 16px !important" in CSS
+    assert "margin-inline: auto !important" in CSS
+
+
 def test_setup_accordions_share_one_scoped_component_style() -> None:
     from app import demo
 
@@ -478,7 +489,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "7eebacda76a41450264b6b6700e7388b6a08389686ee68dd057606b4bb19ea0a"
+    assert digest == "15279b3c1a961da92210fb321500fb4f08c15906861e91867ede51bd1acc7f2b"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

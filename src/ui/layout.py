@@ -33,6 +33,7 @@ from src.ui.uploads import pages_for_selection, refresh_docs, scope_summary_html
 def build_demo() -> gr.Blocks:
     with gr.Blocks(
         title="DocuLearn-RAG",
+        elem_id="doculearn-app",
         fill_width=True,
         fill_height=True,
     ) as demo:

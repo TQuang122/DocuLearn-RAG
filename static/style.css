@@ -116,6 +116,98 @@ body {
   padding: 0 clamp(var(--space-4), 3vw, var(--space-8)) var(--space-8) !important;
 }
 
+#doculearn-app,
+#doculearn-app.gradio-container {
+  --font-sans: "Inter Variable", "Inter", "SF Pro Display", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  --font-mono: "Berkeley Mono", "SFMono-Regular", Menlo, monospace !important;
+  --surface-canvas: #08090a !important;
+  --surface-deep: #050506 !important;
+  --surface-panel: #0f1012 !important;
+  --surface-elevated: #17181b !important;
+  --surface-hover: #202126 !important;
+  --surface-glass: rgba(15, 16, 18, 0.78) !important;
+  --surface-input: rgba(255, 255, 255, 0.035) !important;
+  --text-primary: #f7f8f8 !important;
+  --text-secondary: #c6c9d0 !important;
+  --text-tertiary: #8a8f98 !important;
+  --text-disabled: #7c818a !important;
+  --border-subtle: rgba(255, 255, 255, 0.06) !important;
+  --border-default: rgba(255, 255, 255, 0.1) !important;
+  --border-strong: rgba(255, 255, 255, 0.16) !important;
+  --accent-primary: #5e6ad2 !important;
+  --accent-bright: #7170ff !important;
+  --accent-hover: #828fff !important;
+  --action-primary: #4f5bc0 !important;
+  --action-hover: #5a65ca !important;
+  --accent-wash: rgba(113, 112, 255, 0.12) !important;
+  --accent-glow: rgba(94, 106, 210, 0.2) !important;
+  --status-success: #36b37e !important;
+  --status-warning: #d5a83f !important;
+  --status-error: #e0626c !important;
+  --body-background-fill: #08090a !important;
+  --body-text-color: #f7f8f8 !important;
+  --background-fill-primary: #08090a !important;
+  --background-fill-secondary: #0f1012 !important;
+  --block-background-fill: transparent !important;
+  --input-background-fill: #17181b !important;
+  --input-border-color: rgba(255, 255, 255, 0.1) !important;
+  --button-primary-background-fill: #4f5bc0 !important;
+  --button-secondary-background-fill: #17181b !important;
+  --spacing-xxs: 1px !important;
+  --spacing-xs: 2px !important;
+  --spacing-sm: 4px !important;
+  --spacing-md: 6px !important;
+  --spacing-lg: 8px !important;
+  --spacing-xl: 10px !important;
+  --spacing-xxl: 16px !important;
+  --radius-xxs: 1px !important;
+  --radius-xs: 2px !important;
+  --radius-sm: 4px !important;
+  --radius-md: 6px !important;
+  --radius-lg: 8px !important;
+  --body-text-size: 1rem !important;
+  --body-text-weight: 400 !important;
+  --button-border-width: 1px !important;
+  --button-large-radius: var(--radius-control) !important;
+  --button-medium-radius: var(--radius-control) !important;
+  --button-small-radius: var(--radius-control) !important;
+  color-scheme: dark !important;
+  isolation: isolate;
+}
+
+#doculearn-app.gradio-container {
+  width: min(100%, var(--content-max)) !important;
+  max-width: var(--content-max) !important;
+  margin-inline: auto !important;
+  padding: 0 clamp(var(--space-4), 3vw, var(--space-8)) var(--space-8) !important;
+}
+
+#doculearn-app,
+#doculearn-app * {
+  font-family: var(--font-sans) !important;
+}
+
+#doculearn-app code,
+#doculearn-app pre,
+#doculearn-app .font-mono,
+#doculearn-app [data-testid="number-input"] input {
+  font-family: var(--font-mono) !important;
+}
+
+html body #root > #doculearn-app,
+html body #root > #doculearn-app::before,
+html body #root > #doculearn-app::after {
+  background-color: var(--surface-canvas) !important;
+  background-image: none !important;
+}
+
+#doculearn-app::before,
+#doculearn-app::after {
+  display: none !important;
+  content: none !important;
+}
+
 .gradio-container .block,
 .gradio-container .form,
 .gradio-container .panel,
