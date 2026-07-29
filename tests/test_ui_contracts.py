@@ -96,6 +96,8 @@ def test_demo_isolated_from_host_theme_css() -> None:
     assert "html body #root > #doculearn-app::before" in CSS
     assert "--spacing-xxl: 16px !important" in CSS
     assert "margin-inline: auto !important" in CSS
+    assert ".gradio-container .panel-heading h2" in CSS
+    assert "font-size: 1.25rem !important" in CSS
 
 
 def test_setup_accordions_share_one_scoped_component_style() -> None:
@@ -489,7 +491,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "15279b3c1a961da92210fb321500fb4f08c15906861e91867ede51bd1acc7f2b"
+    assert digest == "d10c3ead23a7a2298e2907e783b52f848296f1e41c8de5600b5c78125dfe8995"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

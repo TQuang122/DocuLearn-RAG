@@ -208,6 +208,26 @@ html body #root > #doculearn-app::after {
   content: none !important;
 }
 
+.gradio-container .panel-heading > div {
+  padding-top: 6px !important;
+}
+
+.gradio-container .panel-heading h2 {
+  margin: 0 !important;
+  color: var(--text-primary) !important;
+  font-size: 1.25rem !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.014em !important;
+  line-height: 1.3 !important;
+}
+
+.gradio-container .panel-heading p {
+  margin: var(--space-1) 0 0 !important;
+  color: var(--text-tertiary) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.45 !important;
+}
+
 .gradio-container .block,
 .gradio-container .form,
 .gradio-container .panel,
