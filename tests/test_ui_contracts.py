@@ -101,12 +101,19 @@ def test_demo_isolated_from_host_theme_css() -> None:
     assert "font-size: 1.25rem !important" in CSS
     assert ".gradio-container *" in CSS
     assert "#doculearn-app,\n.gradio-container" in CSS
-    assert "display=optional" in CSS
+    assert "display=swap" in CSS
+    assert "--type-body: 1rem" in CSS
+    assert "--type-display: clamp(2.5rem, 5.6vw, 4.5rem)" in CSS
     assert ".product-header" in CSS and "height: 68px" in CSS
     assert "height: 368px !important" in CSS
     assert "min-height: 456px" in CSS
     assert ".gradio-container .hero-copy h1" in CSS
     assert "margin: 0 !important" in CSS
+    assert ".gradio-container .main-layout" in CSS
+    assert "width: calc(100% - var(--space-3) - var(--space-3)) !important" in CSS
+    assert "--accent-info: #76a7ff" in CSS
+    assert ".gradio-container .control-stack .panel-icon" in CSS
+    assert ".gradio-container .summary-status span" in CSS
     assert "_syncAccessibility" in INTERACTIVE_HEAD_HTML
     assert 'data-doculearn-tabindex' in INTERACTIVE_HEAD_HTML
     assert 'source-file-picker button[aria-label*="upload" i]' in INTERACTIVE_HEAD_HTML
@@ -506,7 +513,7 @@ def test_library_refresh_keeps_page_scope_disabled(
 def test_refactor_preserves_stylesheet() -> None:
     digest = hashlib.sha256(CSS.encode()).hexdigest()
 
-    assert digest == "0ed43df00476feab417bc75589d16be00464ca09248b3eedb1731828c1b271f1"
+    assert digest == "5e226fd37fda5f72c102d139216b454413dca7d9fbcbd3343a5987ae7ae3bc2a"
 
 
 def test_mobile_heading_keeps_word_boundary_when_break_is_hidden() -> None:

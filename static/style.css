@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=optional");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap");
 
 :root,
 :root.dark,
@@ -8,6 +8,16 @@
   --font-sans: "Inter Variable", "Inter", "SF Pro Display", -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "Berkeley Mono", "SFMono-Regular", Menlo, monospace;
+
+  --type-caption: 0.75rem;
+  --type-label: 0.875rem;
+  --type-body: 1rem;
+  --type-body-large: 1.0625rem;
+  --type-heading: 1.5rem;
+  --type-display: clamp(2.5rem, 5.6vw, 4.5rem);
+  --leading-tight: 1.1;
+  --leading-body: 1.65;
+  --leading-reading: 1.72;
 
   --surface-canvas: #08090a;
   --surface-deep: #050506;
@@ -30,6 +40,8 @@
   --accent-primary: #5e6ad2;
   --accent-bright: #7170ff;
   --accent-hover: #828fff;
+  --accent-info: #76a7ff;
+  --accent-study: #a494ff;
   --action-primary: #4f5bc0;
   --action-hover: #5a65ca;
   --accent-wash: rgba(113, 112, 255, 0.12);
@@ -140,6 +152,8 @@ body {
   --accent-primary: #5e6ad2 !important;
   --accent-bright: #7170ff !important;
   --accent-hover: #828fff !important;
+  --accent-info: #76a7ff !important;
+  --accent-study: #a494ff !important;
   --action-primary: #4f5bc0 !important;
   --action-hover: #5a65ca !important;
   --accent-wash: rgba(113, 112, 255, 0.12) !important;
@@ -240,6 +254,18 @@ html body #root > div > .gradio-container::after,
   color: var(--text-tertiary) !important;
   font-size: 0.875rem !important;
   line-height: 1.45 !important;
+}
+
+.gradio-container .control-stack .panel-icon {
+  border-color: rgba(118, 167, 255, 0.24) !important;
+  background: rgba(118, 167, 255, 0.12) !important;
+  color: var(--accent-info) !important;
+}
+
+.gradio-container .preview-col .panel-icon {
+  border-color: rgba(164, 148, 255, 0.26) !important;
+  background: rgba(164, 148, 255, 0.13) !important;
+  color: var(--accent-study) !important;
 }
 
 .gradio-container .block,
@@ -1584,6 +1610,163 @@ html body #root > div > .gradio-container::after,
   }
 }
 
+html body .gradio-container p,
+html body .gradio-container li {
+  font-size: var(--type-body) !important;
+  line-height: var(--leading-body) !important;
+}
+
+html body .gradio-container .panel-heading h2,
+html body .gradio-container .summary-heading h2,
+html body .gradio-container .quiz-heading h2,
+html body .gradio-container .flashcard-heading h2,
+html body .gradio-container .qa-heading h2 {
+  font-size: var(--type-heading) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+}
+
+html body .gradio-container .result-markdown,
+html body .gradio-container .feature-output .prose,
+html body .gradio-container .qa-chat .message .prose {
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+}
+
+html body .gradio-container .qa-chat .message .prose p,
+html body .gradio-container .result-markdown p,
+html body .gradio-container .feature-output .prose p {
+  font-size: var(--type-body) !important;
+  line-height: var(--leading-reading) !important;
+}
+
+html body .gradio-container .qa-composer-row .qa-input textarea,
+html body .gradio-container .qa-input textarea {
+  font-size: 1rem !important;
+}
+
+.gradio-container,
+.gradio-container * {
+  font-synthesis: none !important;
+}
+
+.gradio-container :where(h1, h2, h3, h4) {
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.gradio-container :where(p, li) {
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+.gradio-container :where(label, .gr-label, .block-title, .label-wrap span) {
+  font-size: var(--type-label) !important;
+  line-height: 1.45 !important;
+}
+
+.gradio-container :where(button, input, select, textarea) {
+  font-family: var(--font-sans) !important;
+}
+
+.gradio-container :where(button) {
+  font-weight: 600 !important;
+}
+
+.gradio-container .hero-copy h1 {
+  font-size: var(--type-display) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.04 !important;
+}
+
+.gradio-container .hero-copy p {
+  max-width: 68ch;
+  font-size: var(--type-body-large) !important;
+  line-height: 1.68 !important;
+}
+
+.gradio-container :where(.panel-heading h2, .summary-heading h2, .quiz-heading h2, .flashcard-heading h2, .qa-heading h2) {
+  font-size: var(--type-heading) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+}
+
+.gradio-container :where(.eyebrow, .qa-eyebrow, .summary-eyebrow, .quiz-eyebrow, .flashcard-eyebrow, .workflow-label) {
+  font-size: var(--type-caption) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.4 !important;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) {
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) p {
+  margin-block: 0 0 1em;
+  font-size: var(--type-body) !important;
+  line-height: var(--leading-reading) !important;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) :where(h1, h2, h3) {
+  margin-block: 1.25em 0.5em;
+  font-weight: 600 !important;
+  letter-spacing: -0.018em !important;
+  line-height: 1.3 !important;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) h1 {
+  font-size: 1.5rem !important;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) h2 {
+  font-size: 1.25rem !important;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) h3 {
+  font-size: 1.0625rem !important;
+}
+
+.gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) :where(code, pre, .citation, [class*="citation"], [class*="chunk"]) {
+  font-family: var(--font-mono) !important;
+  font-size: var(--type-caption) !important;
+  line-height: 1.55 !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.gradio-container :where(.source-file-picker .filename, .source-file-picker td.filename, .scope-summary-files, .scope-summary-page) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.gradio-container .qa-chat .message .prose {
+  font-size: var(--type-body) !important;
+  line-height: var(--leading-reading) !important;
+}
+
+.gradio-container .qa-composer-row .qa-input textarea,
+.gradio-container .qa-input textarea {
+  font-size: 1rem !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 640px) {
+  .gradio-container .hero-copy h1 {
+    font-size: clamp(2.25rem, 11vw, 3.6rem) !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .gradio-container :where(.result-markdown, .feature-output .prose, .qa-chat .message .prose) {
+    max-width: none;
+  }
+}
+
 .qa-composer-row {
   display: flex !important;
   flex-flow: row nowrap !important;
@@ -2693,6 +2876,16 @@ body::after {
   font-weight: 590 !important;
 }
 
+.gradio-container .summary-status {
+  border-color: rgba(213, 168, 63, 0.3) !important;
+  background: rgba(213, 168, 63, 0.1) !important;
+}
+
+.gradio-container .summary-status span {
+  background: var(--status-warning) !important;
+  box-shadow: 0 0 0 4px rgba(213, 168, 63, 0.12) !important;
+}
+
 .gradio-container .flashcard-mode-note {
   color: var(--text-disabled) !important;
   font-size: 0.75rem !important;
@@ -2785,6 +2978,17 @@ body::after {
 
 .gradio-container .scope-summary-page {
   color: var(--text-tertiary) !important;
+}
+
+.gradio-container .main-layout,
+.gradio-container .scope-summary-shell,
+.gradio-container .learning-tabs {
+  width: calc(100% - var(--space-3) - var(--space-3)) !important;
+  margin-inline: var(--space-3) !important;
+}
+
+.gradio-container .scope-summary-shell {
+  margin-bottom: var(--space-4) !important;
 }
 
 .gradio-container .hero-shell {
@@ -4280,4 +4484,35 @@ body::after {
     max-height: 52px !important;
     line-height: 52px !important;
   }
+}
+
+html body .gradio-container .hero-copy h1 {
+  font-size: var(--type-display) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.04 !important;
+}
+
+html body .gradio-container .hero-copy p {
+  max-width: 68ch;
+  font-size: var(--type-body-large) !important;
+  line-height: 1.68 !important;
+}
+
+html body .gradio-container :where(.qa-eyebrow, .summary-eyebrow, .quiz-eyebrow, .flashcard-eyebrow, .workflow-label) {
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+}
+
+html body .gradio-container :where(.qa-heading h2, .summary-heading h2, .quiz-heading h2, .flashcard-heading h2) {
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+html body .gradio-container .qa-chat .message .prose :where(h1, h2, h3),
+html body .gradio-container .result-markdown :where(h1, h2, h3),
+html body .gradio-container .feature-output .prose :where(h1, h2, h3) {
+  font-weight: 600 !important;
+  letter-spacing: -0.018em !important;
+  line-height: 1.3 !important;
 }
