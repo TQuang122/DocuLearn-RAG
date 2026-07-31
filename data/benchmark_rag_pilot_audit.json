@@ -1,0 +1,176 @@
+{
+  "dataset": "data/benchmark_rag.jsonl",
+  "pilot_ids": [
+    "qa-001",
+    "qa-002",
+    "qa-003",
+    "qa-004",
+    "qa-005",
+    "qa-006",
+    "qa-007",
+    "qa-008",
+    "qa-009",
+    "qa-010",
+    "qa-011",
+    "qa-012",
+    "qa-013",
+    "qa-014",
+    "qa-015"
+  ],
+  "corpus_files": [
+    "LSTM-GRU[Timeseries and Text]_v2.pdf",
+    "[Description]_Extra_RAG_LangChain.pdf",
+    "[Reading]-Reinforcement-Learning.pdf",
+    "main (2).pdf"
+  ],
+  "verification": {
+    "method": "Full-corpus page-level text extraction, targeted term search, and visual verification of candidate pages.",
+    "gold_policy": "Assign source_file and gold_pages only when a passage directly supports the ground truth. Gold chunk IDs remain empty because they vary across chunking strategies.",
+    "question_type_taxonomy": [
+      "conceptual",
+      "factual",
+      "definition",
+      "comparison",
+      "causal",
+      "numerical"
+    ],
+    "difficulty_scale": [
+      "easy",
+      "medium",
+      "hard"
+    ]
+  },
+  "summary": {
+    "records_audited": 15,
+    "source_verified": 1,
+    "source_not_found": 14,
+    "source_coverage": 0.0667,
+    "answerable_changed": 0,
+    "question_type_annotated": 15,
+    "difficulty_annotated": 15
+  },
+  "records": [
+    {
+      "id": "qa-001",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the missing LLM instruction-tuning source document, or mark this record unanswerable if the current four-PDF corpus is fixed."
+    },
+    {
+      "id": "qa-002",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the missing instruction-tuned conversation-format source document, or mark this record unanswerable if the current four-PDF corpus is fixed."
+    },
+    {
+      "id": "qa-003",
+      "status": "source_verified",
+      "source_file": "main (2).pdf",
+      "gold_pages": [
+        3
+      ],
+      "evidence": "Instead of updating the full pre-trained weight matrix W0, LoRA freezes these weights and represents the update through a low-rank decomposition BA.",
+      "verification_method": "Text extraction and rendered-page visual inspection."
+    },
+    {
+      "id": "qa-004",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add a QLoRA source that directly documents 4-bit quantization, or mark this record unanswerable if the current corpus is fixed."
+    },
+    {
+      "id": "qa-005",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the missing pretraining-versus-SFT source document, or mark this record unanswerable if the current corpus is fixed."
+    },
+    {
+      "id": "qa-006",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the Vietnamese GPT-2 pretraining source covering BKAINewsCorpus and Vietnamese Wikipedia, or mark this record unanswerable."
+    },
+    {
+      "id": "qa-007",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add a decoder-only language-model pretraining source, or mark this record unanswerable if the current corpus is fixed."
+    },
+    {
+      "id": "qa-008",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the Vietnamese GPT-2 data-mixture source explaining Wikipedia upsampling, or mark this record unanswerable."
+    },
+    {
+      "id": "qa-009",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the source applying Chinchilla scaling to GPT-2 small, or mark this record unanswerable if the current corpus is fixed."
+    },
+    {
+      "id": "qa-010",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add a GPT architecture source that directly establishes decoder-only Transformer structure, or mark this record unanswerable."
+    },
+    {
+      "id": "qa-011",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the source containing the BooksCorpus sample count and size, or mark this record unanswerable if the current corpus is fixed."
+    },
+    {
+      "id": "qa-012",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add an LLM development source that directly defines fine-tuning after pretraining, or mark this record unanswerable."
+    },
+    {
+      "id": "qa-013",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add a language-model fundamentals source that defines sequence probability estimation, or mark this record unanswerable."
+    },
+    {
+      "id": "qa-014",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add an LLM scaling source covering both data volume and parameter count, or mark this record unanswerable."
+    },
+    {
+      "id": "qa-015",
+      "status": "source_not_found",
+      "source_file": null,
+      "gold_pages": [],
+      "evidence": null,
+      "recommendation": "Add the spam-classification source defining Ham and Spam labels, or mark this record unanswerable if the current corpus is fixed."
+    }
+  ]
+}

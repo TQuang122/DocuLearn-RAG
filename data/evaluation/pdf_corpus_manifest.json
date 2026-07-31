@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "corpus_id": "4f5e7b9fc2d2bcac",
+  "source_dir": "../[Data]-Documents-PDFs",
+  "document_count": 7,
+  "documents": [
+    {
+      "filename": "[Description]-LLMs-Fine-tuning.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Description]-LLMs-Fine-tuning.pdf",
+      "sha256": "cfd95c75cafa788214e69e61becc625a6a1adc9d414003b7b56606219f96ac6d",
+      "size_bytes": 2217955,
+      "page_count": 31
+    },
+    {
+      "filename": "[Description]-Poem-Generation-GPT2.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Description]-Poem-Generation-GPT2.pdf",
+      "sha256": "1f884dbfbfe5441e93fe023dc40bf8019bd3444bb699142852fe165f60974f8f",
+      "size_bytes": 6608363,
+      "page_count": 33
+    },
+    {
+      "filename": "[Description]-Pretraining-GPT.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Description]-Pretraining-GPT.pdf",
+      "sha256": "f5081aa193f2b4063e05dcbef2e9ba11840c8c5a15cf21ffd881b8ab636ebbdd",
+      "size_bytes": 1399193,
+      "page_count": 18
+    },
+    {
+      "filename": "[Description]-Project-2.2-Text-Classification-Naive-Bayes-Vector-Database.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Description]-Project-2.2-Text-Classification-Naive-Bayes-Vector-Database.pdf",
+      "sha256": "9286a888d04192a21e568363b048c8ae7b89d4147850d51e92859961adb305ea",
+      "size_bytes": 1327903,
+      "page_count": 25
+    },
+    {
+      "filename": "[Reading]-LLM-Alignment.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Reading]-LLM-Alignment.pdf",
+      "sha256": "dc894d5bc5f9e45e9b108a35e4fd82a2178832d9ffde276fd5da45b3158dc2de",
+      "size_bytes": 7709248,
+      "page_count": 17
+    },
+    {
+      "filename": "[Reading]-Reasoning-LLMs.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Reading]-Reasoning-LLMs.pdf",
+      "sha256": "2109d2d09f39f062bb6ef0cf233e321b6faf83bcf207afaf17ff804c09817ab2",
+      "size_bytes": 1956038,
+      "page_count": 17
+    },
+    {
+      "filename": "[Reading_Quiz]-Question-Answering.pdf",
+      "relative_path": "../[Data]-Documents-PDFs/[Reading_Quiz]-Question-Answering.pdf",
+      "sha256": "ea1ca8b9a0b467c993839ea7615c56374e5f4bd4a199a0022affc8471290e101",
+      "size_bytes": 2975738,
+      "page_count": 25
+    }
+  ]
+}

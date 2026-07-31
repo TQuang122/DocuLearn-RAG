@@ -201,12 +201,54 @@ Environment variables use the `RAG_` prefix unless noted otherwise.
 | `RAG_SERVER_NAME` | `127.0.0.1` | Gradio bind host |
 | `RAG_SERVER_PORT` | `7860` | Gradio port |
 | `RAG_TOP_K` | `5` | Default retrieval count |
+| `RAG_RETRIEVAL_MODE` | `dense` | Retrieval mode: `dense` or guarded `fusion` pilot |
+| `RAG_RETRIEVAL_CANDIDATE_K` | `50` | Dense candidate pool used by fusion retrieval |
+| `RAG_RETRIEVAL_DENSE_WEIGHT` | `0.25` | Dense score weight in fusion ranking |
+| `RAG_RETRIEVAL_MAX_CHUNKS_PER_PAGE` | `1` | Page diversity cap in fusion results |
+| `RAG_RETRIEVAL_FALLBACK_TO_DENSE` | `true` | Fall back to dense retrieval if fusion fails |
+| `RAG_RETRIEVAL_TELEMETRY_ENABLED` | `false` | Persist privacy-safe retrieval telemetry |
+| `RAG_RETRIEVAL_SHADOW_SAMPLE_RATE` | `0.0` | Fraction of requests compared with the other mode |
 | `RAG_CHUNK_SIZE` | `1500` | Chunk size |
 | `RAG_CHUNK_OVERLAP` | `200` | Chunk overlap |
 | `RAG_LLM_MODEL` | `gemini-flash-lite-latest` | Gemini model |
 | `RAG_EMBEDDING_MODEL` | multilingual MiniLM | Local embedding model |
 
 See `.env.example` for the complete list of supported settings.
+
+Fusion retrieval is opt-in. Set `RAG_RETRIEVAL_MODE=fusion` to run the
+validated candidate-50 configuration. Each retrieval emits structured Loguru
+telemetry with its mode, candidate count, result count, latency, collection,
+and fallback status. Keep dense fallback enabled during the pilot.
+
+For a sampled pilot that returns fusion results while comparing dense retrieval
+in a background worker:
+
+```env
+RAG_RETRIEVAL_MODE=fusion
+RAG_RETRIEVAL_FALLBACK_TO_DENSE=true
+RAG_RETRIEVAL_TELEMETRY_ENABLED=true
+RAG_RETRIEVAL_SHADOW_SAMPLE_RATE=0.1
+```
+
+Events are appended to `exports/retrieval_telemetry.jsonl`. They contain a
+random event ID, modes, result counts, latency, fallback/error types, top-1
+agreement, and overlap at k. Query text, filters, filenames selected by the
+user, and generated answers are never persisted. Summarize the pilot with:
+
+```bash
+uv run doculearn-rag retrieval-telemetry \
+  --max-fallback-rate 0.01 \
+  --max-error-rate 0.01 \
+  --max-insufficient-rate 0.01 \
+  --max-primary-p95-ms 250 \
+  --min-events 100 \
+  --min-shadow-events 30
+```
+
+The operational gate is `insufficient_data` until telemetry includes at least
+100 total events and 30 shadow comparisons by default. Retrieval quality still
+requires the annotated product benchmark; agreement between dense and fusion
+is not a relevance label.
 
 ## Project layout
 
@@ -219,6 +261,7 @@ src/rag.py             Retrieval, prompts, and citations
 src/learning.py        Summaries, quizzes, and flashcards
 src/interfaces/cli.py  Typer CLI
 src/interfaces/api.py  FastAPI service
+src/evaluation/        Retrieval and answer-quality evaluation tools
 src/ui/                Gradio layout, callbacks, and interactive surfaces
 src/prompts/           Jinja2 generation prompts
 static/style.css       DocuLearn-RAG design system styles
@@ -246,27 +289,188 @@ The test suite covers configuration boundaries, PDF indexing, vector-store
 contracts, API routes, CLI entrypoints, Markdown safety, and the Gradio UI
 surface contract.
 
-## Chunking evaluation
+## RAG evaluation
 
-Evaluation cases are JSON objects with a question and reference answer:
+### Evaluation data
+
+The canonical retrieval dataset is
+`data/benchmark_rag.jsonl`. Each line follows this schema:
 
 ```json
-[
-  {
-    "question": "What is the main contribution?",
-    "ground_truth": "The reference answer."
-  }
-]
+{
+  "id": "qa-001",
+  "question": "What is the main contribution?",
+  "ground_truth": "The reference answer.",
+  "source_file": null,
+  "gold_pages": [],
+  "gold_chunk_ids": [],
+  "answerable": true,
+  "question_type": null,
+  "difficulty": null
+}
 ```
 
-Run the evaluation command with a Gemini key configured:
+Regenerate it from the legacy CSV without inventing source metadata:
 
 ```bash
-uv run python -m src.evaluation.run_chunking evaluation_cases.json
+uv run python -m src.evaluation.evaluation_dataset \
+  'data/[Data]-Benchmark-Rag.csv' \
+  --output data/benchmark_rag.jsonl \
+  --report data/benchmark_rag_annotation_report.json
 ```
 
-Evaluation may incur Gemini API usage. The project pins compatible Ragas and
-LangChain Community versions to keep the evaluation imports stable.
+Use `data/benchmark_rag_annotation_report.json` as the annotation queue. For
+each answerable record, inspect the source PDF and add either:
+
+- `source_file` plus one or more 1-based `gold_pages`; or
+- one or more exact `gold_chunk_ids`.
+
+Also annotate `question_type` and `difficulty` (`easy`, `medium`, or `hard`).
+Do not infer source metadata from the reference answer alone. Set
+`answerable` to `false` only when the selected corpus genuinely cannot answer
+the question; unanswerable records must not contain gold source metadata.
+
+### Retrieval baseline
+
+Retrieval evaluation uses the existing local embedding model and Qdrant
+collection, but it never calls Gemini or another LLM. Evaluate one existing
+collection:
+
+```bash
+uv run python -m src.evaluation.retrieval_evaluator \
+  data/benchmark_rag.jsonl \
+  --collection doculearn_rag \
+  --k 10 \
+  --output-dir evaluation-results/retrieval/current
+```
+
+Pass the same metadata filters accepted by production retrieval when needed:
+
+```bash
+uv run python -m src.evaluation.retrieval_evaluator \
+  data/benchmark_rag.jsonl \
+  --collection doculearn_rag \
+  --k 10 \
+  --filters-json '{"filename":"paper.pdf","page":2}' \
+  --output-dir evaluation-results/retrieval/filtered
+```
+
+To rebuild isolated collections and compare all registered recursive
+chunking strategies (`rc_500_50`, `rc_800_100`, `rc_1000_150`, and
+`rc_1500_200`):
+
+```bash
+uv run python -m src.evaluation.run_retrieval \
+  data/benchmark_rag.jsonl \
+  --k 10 \
+  --output-dir evaluation-results/retrieval/chunking
+```
+
+Each strategy directory contains:
+
+- `cases.jsonl`: ranked chunks, latency, annotation status, and metrics for
+  every question;
+- `summary.json`: Recall@1/3/5/10, MRR, nDCG at the configured `k`, p50/p95
+  retrieval latency, and coverage counts.
+
+`baseline_summary.json` compares all four strategies. Ranking metrics include
+only answerable records with gold source metadata. Missing annotations are
+reported as `annotation_required`, not silently scored as failures.
+Unanswerable questions are reported separately through
+`unanswerable_accuracy`, which measures whether retrieval returned no chunks.
+
+`k` must be at least 10 so every requested recall cutoff is observable.
+
+### Frozen product PDF corpus
+
+The seven product evaluation PDFs live below `data/[Data]-Documents-PDFs/`,
+while production ingestion intentionally discovers only top-level PDFs. Create
+an evaluation-only manifest so experiments use the exact intended corpus:
+
+```bash
+uv run python -m src.evaluation.pdf_corpus build-manifest \
+  --pdf-dir 'data/[Data]-Documents-PDFs' \
+  --output data/evaluation/pdf_corpus_manifest.json
+
+uv run python -m src.evaluation.pdf_corpus build-queue \
+  data/benchmark_rag.jsonl \
+  --manifest data/evaluation/pdf_corpus_manifest.json \
+  --output evaluation-results/annotation/benchmark_rag_queue.jsonl
+```
+
+The queue suggests likely pages but leaves every review `pending`. Candidates
+must be checked against the PDF before setting `status` to `approved` or
+`unanswerable`. Export is rejected while any record remains pending:
+
+```bash
+uv run python -m src.evaluation.pdf_corpus apply-queue \
+  data/benchmark_rag.jsonl \
+  --manifest data/evaluation/pdf_corpus_manifest.json \
+  --queue evaluation-results/annotation/benchmark_rag_queue.jsonl \
+  --output data/benchmark_rag_annotated.jsonl \
+  --report data/benchmark_rag_annotation_apply_report.json
+```
+
+Run all four chunking strategies on the frozen product corpus with
+`--corpus-manifest data/evaluation/pdf_corpus_manifest.json`.
+
+### Public retrieval benchmarks
+
+DocuLearn-RAG can run two reproducible external baselines without Gemini:
+
+- **XQuAD-VI** checks Vietnamese retrieval on translated QA passages with gold
+  source paragraphs.
+- **BEIR SciFact** checks scientific retrieval against standard document-level
+  qrels, including queries with more than one relevant document.
+
+Download and normalize either benchmark:
+
+```bash
+uv run python -m src.evaluation.external_benchmarks xquad-vi \
+  --output-dir data/evaluation/external/xquad-vi
+
+uv run python -m src.evaluation.external_benchmarks beir-scifact \
+  --output-dir data/evaluation/external/beir-scifact
+```
+
+Then run the same four chunking strategies used by the PDF baseline:
+
+```bash
+uv run python -m src.evaluation.run_external_retrieval \
+  data/evaluation/external/xquad-vi \
+  --output-dir evaluation-results/retrieval/xquad-vi
+
+uv run python -m src.evaluation.run_external_retrieval \
+  data/evaluation/external/beir-scifact \
+  --output-dir evaluation-results/retrieval/beir-scifact
+```
+
+Add `--limit 10` for a quick smoke test. Generated benchmark corpora are
+ignored by Git and can be rebuilt from their official sources. External
+results measure document-level retrieval and must not be averaged with the
+PDF-specific evaluation set: only manually verified PDF pages or chunks
+measure performance on the actual DocuLearn-RAG study corpus. Temporary Qdrant
+collections are not created: public baselines use exact in-memory cosine search
+with the same configured embedding model.
+
+### Retrieval evaluation versus Ragas
+
+Retrieval evaluation asks whether the correct source appears in the ranked
+chunks. It is deterministic with respect to the indexed collection and does
+not generate answers.
+
+Ragas answer evaluation runs the full answer pipeline and uses Gemini as a
+judge for faithfulness, answer relevancy, context precision, and context
+recall. Run it separately when a `GEMINI_API_KEY` is configured:
+
+```bash
+uv run python -m src.evaluation.run_chunking \
+  evaluation_cases.json \
+  --output-dir evaluation-results/ragas
+```
+
+Ragas may incur API usage. Do not compare its answer-quality scores directly
+with deterministic retrieval metrics.
 
 ## Data and generated files
 

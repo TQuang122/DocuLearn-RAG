@@ -21,6 +21,7 @@ htmlcov/
 storage/
 exports/
 evaluation-results/
+data/evaluation/external/
 
 # General
 .DS_Store

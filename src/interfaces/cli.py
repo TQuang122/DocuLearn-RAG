@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import typer
 from pydantic import BaseModel, ValidationError
@@ -14,6 +15,7 @@ from src.indexing import ingest as ingest_data
 from src.learning import generate_flashcards, generate_quiz
 from src.learning import summarize as summarize_learning
 from src.rag import answer, retrieve
+from src.retrieval_telemetry import load_retrieval_summary
 from src.schemas import RetrievedChunk
 
 app = typer.Typer(help="Index PDFs and use grounded DocuLearn-RAG learning features.")
@@ -115,6 +117,43 @@ def debug_retrieval(
             f"S{index} {metadata.filename} p.{metadata.page} "
             f"score={chunk.score:.4f}\n{chunk.text}\n"
         )
+
+
+@app.command(
+    "retrieval-telemetry",
+    help="Summarize privacy-safe retrieval pilot telemetry and promotion gates.",
+)
+def retrieval_telemetry(
+    path: Path | None = None,
+    max_fallback_rate: float = 0.01,
+    max_error_rate: float = 0.01,
+    max_insufficient_rate: float = 0.01,
+    max_primary_p95_ms: float | None = None,
+    min_events: int = 100,
+    min_shadow_events: int = 30,
+    output: Path | None = None,
+    fail_on_gate: bool = False,
+) -> None:
+    summary = load_retrieval_summary(
+        path,
+        max_fallback_rate=max_fallback_rate,
+        max_error_rate=max_error_rate,
+        max_insufficient_rate=max_insufficient_rate,
+        max_primary_p95_ms=max_primary_p95_ms,
+        min_events=min_events,
+        min_shadow_events=min_shadow_events,
+    )
+    rendered = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
+    if output is None:
+        typer.echo(rendered, nl=False)
+    else:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        _ = output.write_text(rendered, encoding="utf-8")
+        typer.echo(f"Exported to {output}")
+    gate = cast(dict[str, object], summary["promotion_gate"])
+    status = str(gate["status"])
+    if fail_on_gate and status != "pass":
+        raise typer.Exit(code=1)
 
 
 @app.command()

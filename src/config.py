@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=1500, ge=500)
     chunk_overlap: int = Field(default=200, ge=0)
     top_k: int = Field(default=5, ge=1, le=64)
+    retrieval_mode: Literal["dense", "fusion"] = "dense"
+    retrieval_candidate_k: int = Field(default=50, ge=1, le=256)
+    retrieval_dense_weight: float = Field(default=0.25, ge=0.0, le=1.0)
+    retrieval_max_chunks_per_page: int = Field(default=1, ge=1, le=64)
+    retrieval_fallback_to_dense: bool = True
+    retrieval_telemetry_enabled: bool = False
+    retrieval_shadow_sample_rate: float = Field(default=0.0, ge=0.0, le=1.0)
 
     llm_provider: Literal["gemini"] = "gemini"
     llm_model: str = "gemini-flash-lite-latest"
@@ -69,6 +76,10 @@ class Settings(BaseSettings):
         if bool(self.gradio_username) != bool(self.gradio_password):
             raise ValueError(
                 "RAG_GRADIO_USERNAME and RAG_GRADIO_PASSWORD must be configured together."
+            )
+        if self.retrieval_shadow_sample_rate > 0 and not self.retrieval_telemetry_enabled:
+            raise ValueError(
+                "RAG_RETRIEVAL_TELEMETRY_ENABLED must be true when shadow sampling is enabled."
             )
         for field_name in ("data_dir", "storage_dir", "export_dir"):
             path = getattr(self, field_name)

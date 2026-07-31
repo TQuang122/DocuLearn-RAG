@@ -17,6 +17,7 @@ def test_cli_help_runs_from_project_root() -> None:
 
     assert result.returncode == 0, result.stderr
     assert "debug-retrieval" in result.stdout
+    assert "retrieval-telemetry" in result.stdout
 
 
 def test_api_exposes_complete_learning_surface() -> None:

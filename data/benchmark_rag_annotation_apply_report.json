@@ -1,0 +1,10 @@
+{
+  "corpus_id": "4f5e7b9fc2d2bcac",
+  "input_dataset": "data/benchmark_rag.jsonl",
+  "annotation_queue": "evaluation-results/annotation/benchmark_rag_queue.jsonl",
+  "output_dataset": "data/benchmark_rag_annotated.jsonl",
+  "total_records": 50,
+  "approved": 50,
+  "unanswerable": 0,
+  "pending": 0
+}
