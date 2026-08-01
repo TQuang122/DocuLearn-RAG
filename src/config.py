@@ -48,6 +48,7 @@ class Settings(BaseSettings):
 
     gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
     api_key: str | None = None
+    api_key_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     gradio_username: str | None = None
     gradio_password: str | None = None
     server_name: str = "127.0.0.1"
@@ -62,6 +63,7 @@ class Settings(BaseSettings):
     @field_validator(
         "gemini_api_key",
         "api_key",
+        "api_key_sha256",
         "gradio_username",
         "gradio_password",
         mode="before",

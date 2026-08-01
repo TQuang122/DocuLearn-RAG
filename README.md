@@ -194,6 +194,7 @@ Environment variables use the `RAG_` prefix unless noted otherwise.
 | --- | --- | --- |
 | `GEMINI_API_KEY` | unset | Gemini generation credential |
 | `RAG_API_KEY` | unset | Optional API authentication key |
+| `RAG_API_KEY_SHA256` | unset | Optional SHA-256 verifier for monitoring auth |
 | `RAG_DATA_DIR` | `data` | Input PDF directory |
 | `RAG_STORAGE_DIR` | `storage/qdrant` | Local Qdrant storage |
 | `RAG_EXPORT_DIR` | `exports` | Generated Markdown/text files |
@@ -261,10 +262,12 @@ curl -H "X-API-Key: $RAG_API_KEY" \
   http://127.0.0.1:7860/monitoring/retrieval/summary
 ```
 
-The monitoring route returns `404` when `RAG_API_KEY` is not configured and
-`401` for a missing or invalid key. Telemetry rotates after 5 MiB by default,
-retaining the newest 5,000 events. On Hugging Face, configure `RAG_API_KEY` as
-a Space Secret and the remaining pilot settings as Space Variables.
+The monitoring route returns `404` when neither `RAG_API_KEY` nor
+`RAG_API_KEY_SHA256` is configured and `401` for a missing or invalid key.
+Telemetry rotates after 5 MiB by default, retaining the newest 5,000 events.
+On Hugging Face, keep `RAG_API_KEY` as a Space Secret. A SHA-256 digest may be
+configured as `RAG_API_KEY_SHA256` when the runtime needs a hashed verifier;
+the plaintext key remains private.
 
 ## Project layout
 

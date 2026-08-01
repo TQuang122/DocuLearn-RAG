@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+
 from fastapi.testclient import TestClient
 
 from src.config import settings
@@ -39,6 +41,9 @@ def test_configured_api_key_protects_documents(monkeypatch) -> None:
 
 def test_monitoring_endpoint_is_disabled_without_api_key(monkeypatch) -> None:
     monkeypatch.setattr(settings, "api_key", None)
+    monkeypatch.setattr(settings, "api_key_sha256", None)
+    monkeypatch.delenv("RAG_API_KEY", raising=False)
+    monkeypatch.delenv("RAG_API_KEY_SHA256", raising=False)
 
     response = TestClient(app).get("/monitoring/retrieval/summary")
 
@@ -47,6 +52,7 @@ def test_monitoring_endpoint_is_disabled_without_api_key(monkeypatch) -> None:
 
 def test_monitoring_endpoint_requires_key_and_returns_summary(monkeypatch) -> None:
     monkeypatch.setattr(settings, "api_key", "test-secret")
+    monkeypatch.setattr(settings, "api_key_sha256", None)
     monkeypatch.setattr(
         "src.monitoring.load_retrieval_summary",
         lambda: {"promotion_gate": {"status": "insufficient_data"}},
@@ -61,3 +67,26 @@ def test_monitoring_endpoint_requires_key_and_returns_summary(monkeypatch) -> No
 
     assert response.status_code == 200
     assert response.json()["promotion_gate"]["status"] == "insufficient_data"
+
+
+def test_monitoring_endpoint_accepts_hashed_api_key(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "api_key", None)
+    monkeypatch.setattr(
+        settings,
+        "api_key_sha256",
+        hashlib.sha256(b"test-secret").hexdigest(),
+    )
+    monkeypatch.setattr(
+        "src.monitoring.load_retrieval_summary",
+        lambda: {"promotion_gate": {"status": "insufficient_data"}},
+    )
+    client = TestClient(app)
+
+    assert client.get("/monitoring/retrieval/summary").status_code == 401
+    assert (
+        client.get(
+            "/monitoring/retrieval/summary",
+            headers={"X-API-Key": "test-secret"},
+        ).status_code
+        == 200
+    )

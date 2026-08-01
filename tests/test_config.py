@@ -16,6 +16,15 @@ def test_blank_api_key_disables_api_auth(monkeypatch) -> None:
     assert configured.api_key is None
 
 
+def test_hashed_api_key_loads_from_environment(monkeypatch) -> None:
+    digest = "a" * 64
+    monkeypatch.setenv("RAG_API_KEY_SHA256", digest)
+
+    configured = Settings(_env_file=None)
+
+    assert configured.api_key_sha256 == digest
+
+
 def test_fusion_retrieval_settings_load_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("RAG_RETRIEVAL_MODE", "fusion")
     monkeypatch.setenv("RAG_RETRIEVAL_CANDIDATE_K", "50")
