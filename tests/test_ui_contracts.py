@@ -88,6 +88,29 @@ def test_demo_keeps_learning_event_contract() -> None:
     assert contracts["lambda_2"] == (1, 1)
 
 
+def test_dynamic_scope_events_skip_stale_component_choice_validation() -> None:
+    from app import demo
+
+    scoped_events = {
+        "pages_for_selection",
+        "prepare_delete",
+        "delete_selected_docs",
+        "ask_chat",
+        "ask_chat_button",
+        "summarize_documents",
+        "generate_quiz_set",
+        "generate_flashcard_set",
+        "scope_summary_refresh",
+        "scope_summary_selection",
+        "scope_summary_upload",
+        "scope_summary",
+        "scope_summary_after_delete",
+    }
+    functions = {fn.api_name: fn for fn in demo.fns.values()}
+
+    assert all(functions[event].preprocess is False for event in scoped_events)
+
+
 def test_demo_isolated_from_host_theme_css() -> None:
     from app import demo
 

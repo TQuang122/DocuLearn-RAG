@@ -291,17 +291,20 @@ def build_demo() -> gr.Blocks:
             inputs=[docs, page],
             outputs=[scope_summary],
             api_name="scope_summary_refresh",
+            preprocess=False,
         )
         docs.change(
             fn=pages_for_selection,
             inputs=[doc_map_state, docs],
             outputs=[page],
             api_name="pages_for_selection",
+            preprocess=False,
         ).then(
             fn=scope_summary_html,
             inputs=[docs, page],
             outputs=[scope_summary],
             api_name="scope_summary_selection",
+            preprocess=False,
         )
         upload_btn.click(
             fn=upload_pdf,
@@ -313,12 +316,14 @@ def build_demo() -> gr.Blocks:
             inputs=[docs, page],
             outputs=[scope_summary],
             api_name="scope_summary_upload",
+            preprocess=False,
         )
         page.change(
             fn=scope_summary_html,
             inputs=[docs, page],
             outputs=[scope_summary],
             api_name="scope_summary",
+            preprocess=False,
         )
         delete_btn.click(
             fn=prepare_delete,
@@ -331,12 +336,14 @@ def build_demo() -> gr.Blocks:
                 delete_confirmation_actions,
             ],
             api_name="prepare_delete",
+            preprocess=False,
         )
         confirm_delete_btn.click(
             fn=delete_selected_docs,
             inputs=[docs],
             outputs=[docs, doc_summary],
             api_name="delete_selected_docs",
+            preprocess=False,
         ).then(
             fn=refresh_docs,
             inputs=[],
@@ -346,6 +353,7 @@ def build_demo() -> gr.Blocks:
             inputs=[docs, page],
             outputs=[scope_summary],
             api_name="scope_summary_after_delete",
+            preprocess=False,
         ).then(
             fn=reset_delete_confirmation,
             inputs=[],
@@ -379,12 +387,14 @@ def build_demo() -> gr.Blocks:
             inputs=[q, chatbot, k_ask, docs, page, gemini_key_input],
             outputs=[chatbot, ask_raw, q],
             api_name="ask_chat",
+            preprocess=False,
         )
         send_btn.click(
             fn=ask_chat,
             inputs=[q, chatbot, k_ask, docs, page, gemini_key_input],
             outputs=[chatbot, ask_raw, q],
             api_name="ask_chat_button",
+            preprocess=False,
         )
         summary_panel.button.click(
             fn=summarize_documents,
@@ -397,6 +407,7 @@ def build_demo() -> gr.Blocks:
             ],
             outputs=[summary_panel.markdown, summary_panel.raw],
             api_name="summarize_documents",
+            preprocess=False,
         ).then(
             fn=lambda text: export_download(text, "summary.md"),
             inputs=[summary_panel.markdown],
@@ -416,6 +427,7 @@ def build_demo() -> gr.Blocks:
             ],
             outputs=[quiz_panel.html, quiz_panel.markdown, quiz_panel.raw],
             api_name="generate_quiz_set",
+            preprocess=False,
         ).then(
             fn=lambda text: export_download(text, "quiz.md"),
             inputs=[quiz_panel.markdown],
@@ -435,6 +447,7 @@ def build_demo() -> gr.Blocks:
             ],
             outputs=[flashcard_panel.html, flashcard_panel.markdown, flashcard_panel.raw],
             api_name="generate_flashcard_set",
+            preprocess=False,
         ).then(
             fn=lambda text: export_download(text, "flashcards.md"),
             inputs=[flashcard_panel.markdown],
