@@ -258,7 +258,7 @@ The same summary is available from the running FastAPI or Gradio application:
 
 ```bash
 curl -H "X-API-Key: $RAG_API_KEY" \
-  http://127.0.0.1:7860/api/monitoring/retrieval
+  http://127.0.0.1:7860/monitoring/retrieval/summary
 ```
 
 The monitoring route returns `404` when `RAG_API_KEY` is not configured and

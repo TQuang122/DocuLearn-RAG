@@ -8,7 +8,7 @@ from fastapi import FastAPI, Header, HTTPException, status
 from src.config import settings
 from src.retrieval_telemetry import load_retrieval_summary
 
-MONITORING_PATH = "/api/monitoring/retrieval"
+MONITORING_PATH = "/monitoring/retrieval/summary"
 
 
 def retrieval_monitoring(

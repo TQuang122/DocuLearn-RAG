@@ -40,7 +40,7 @@ def test_configured_api_key_protects_documents(monkeypatch) -> None:
 def test_monitoring_endpoint_is_disabled_without_api_key(monkeypatch) -> None:
     monkeypatch.setattr(settings, "api_key", None)
 
-    response = TestClient(app).get("/api/monitoring/retrieval")
+    response = TestClient(app).get("/monitoring/retrieval/summary")
 
     assert response.status_code == 404
 
@@ -53,9 +53,9 @@ def test_monitoring_endpoint_requires_key_and_returns_summary(monkeypatch) -> No
     )
     client = TestClient(app)
 
-    assert client.get("/api/monitoring/retrieval").status_code == 401
+    assert client.get("/monitoring/retrieval/summary").status_code == 401
     response = client.get(
-        "/api/monitoring/retrieval",
+        "/monitoring/retrieval/summary",
         headers={"X-API-Key": "test-secret"},
     )
 
