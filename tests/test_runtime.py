@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+from typing import cast
+
+import gradio as gr
+
 from src.ui import runtime
 
 
@@ -30,3 +35,29 @@ def test_embedding_warmup_failure_does_not_block_startup(monkeypatch) -> None:
     )
 
     assert runtime.warm_up_if_enabled() is False
+
+
+def test_launch_preserves_the_app_with_custom_routes(monkeypatch, tmp_path: Path) -> None:
+    class DemoStub:
+        def __init__(self) -> None:
+            self.app = object()
+            self.queued_app = object()
+            self.launch_kwargs: dict[str, object] = {}
+
+        def queue(self, **_: object) -> DemoStub:
+            self.app = self.queued_app
+            return self
+
+        def launch(self, **kwargs: object) -> None:
+            self.launch_kwargs = kwargs
+
+    demo = DemoStub()
+    routed_apps: list[object] = []
+    monkeypatch.setattr(runtime.settings, "export_dir", tmp_path)
+    monkeypatch.setattr(runtime, "warm_up_if_enabled", lambda: False)
+    monkeypatch.setattr(runtime, "add_monitoring_route", routed_apps.append)
+
+    runtime.launch_demo(cast(gr.Blocks, demo))
+
+    assert routed_apps == [demo.queued_app]
+    assert demo.launch_kwargs["_app"] is demo.queued_app

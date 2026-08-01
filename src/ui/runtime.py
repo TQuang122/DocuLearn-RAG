@@ -5,6 +5,7 @@ from loguru import logger
 
 from src.config import settings
 from src.embeddings import warm_up_embeddings
+from src.monitoring import add_monitoring_route
 from src.ui.helpers import CSS, THEME
 from src.ui.interactive import INTERACTIVE_HEAD_HTML
 
@@ -27,7 +28,9 @@ def launch_demo(demo: gr.Blocks) -> None:
     auth = None
     if settings.gradio_username and settings.gradio_password:
         auth = (settings.gradio_username, settings.gradio_password)
-    _ = demo.queue(default_concurrency_limit=2).launch(
+    queued_demo = demo.queue(default_concurrency_limit=2)
+    add_monitoring_route(queued_demo.app)
+    _ = queued_demo.launch(
         allowed_paths=[str(settings.export_dir.resolve())],
         auth=auth,
         css=CSS,
@@ -36,4 +39,5 @@ def launch_demo(demo: gr.Blocks) -> None:
         server_name=settings.server_name,
         server_port=settings.server_port,
         theme=THEME,
+        _app=queued_demo.app,
     )
