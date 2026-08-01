@@ -84,3 +84,15 @@ def test_summary_rejects_invalid_promotion_thresholds() -> None:
         summarize_retrieval_events([], max_fallback_rate=1.1)
     with pytest.raises(ValueError, match="positive"):
         summarize_retrieval_events([], min_events=0)
+
+
+def test_telemetry_rotates_to_recent_event_window(tmp_path: Path) -> None:
+    path = tmp_path / "telemetry.jsonl"
+    events = [_event(event_id=f"event-{index}") for index in range(3)]
+    for event in events:
+        write_retrieval_event(event, path, max_bytes=1, retained_events=2)
+
+    loaded, malformed = read_retrieval_events(path)
+
+    assert malformed == 0
+    assert [event.event_id for event in loaded] == ["event-1", "event-2"]

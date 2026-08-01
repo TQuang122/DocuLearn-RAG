@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     retrieval_fallback_to_dense: bool = True
     retrieval_telemetry_enabled: bool = False
     retrieval_shadow_sample_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    retrieval_telemetry_max_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
+    retrieval_telemetry_retained_events: int = Field(default=5000, ge=100)
+
+    embedding_warmup_enabled: bool = False
 
     llm_provider: Literal["gemini"] = "gemini"
     llm_model: str = "gemini-flash-lite-latest"

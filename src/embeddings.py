@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from time import perf_counter
 from typing import cast
 
 from langchain_core.embeddings import Embeddings
@@ -39,3 +40,9 @@ class LocalSentenceTransformerEmbeddings(Embeddings):
 
 def get_embeddings() -> Embeddings:
     return LocalSentenceTransformerEmbeddings()
+
+
+def warm_up_embeddings() -> float:
+    started = perf_counter()
+    _ = get_embeddings().embed_query("DocuLearn retrieval warmup")
+    return (perf_counter() - started) * 1000

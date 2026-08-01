@@ -15,6 +15,7 @@ from src.filters import MetadataFilter, filters_to_dict
 from src.indexing import save_and_ingest_pdf
 from src.learning import generate_flashcards, generate_quiz
 from src.learning import summarize as summarize_learning
+from src.monitoring import add_monitoring_route
 from src.rag import answer
 from src.schemas import FlashcardSet, QuizSet, RagAnswer, Summary
 from src.store import list_documents
@@ -70,6 +71,7 @@ app = _FastAPI(
     description="Grounded Q&A, summaries, quizzes, and flashcards over indexed PDFs.",
     version="0.1.0",
 )
+add_monitoring_route(app)
 
 
 def _require_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:

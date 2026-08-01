@@ -34,6 +34,7 @@ def test_api_exposes_complete_learning_surface() -> None:
         "/summarize",
         "/quiz",
         "/flashcards",
+        "/api/monitoring/retrieval",
     } <= routes
 
 
@@ -42,3 +43,7 @@ def test_gradio_app_imports_without_optional_logo() -> None:
     from app import demo
 
     assert demo is not None
+    assert any(
+        getattr(route, "path", None) == "/api/monitoring/retrieval"
+        for route in demo.app.routes
+    )

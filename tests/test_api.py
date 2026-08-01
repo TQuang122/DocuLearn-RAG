@@ -35,3 +35,29 @@ def test_configured_api_key_protects_documents(monkeypatch) -> None:
     assert client.get("/documents").status_code == 401
     assert client.get("/documents", headers={"X-API-Key": "wrong"}).status_code == 401
     assert client.get("/documents", headers={"X-API-Key": "test-secret"}).status_code == 200
+
+
+def test_monitoring_endpoint_is_disabled_without_api_key(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "api_key", None)
+
+    response = TestClient(app).get("/api/monitoring/retrieval")
+
+    assert response.status_code == 404
+
+
+def test_monitoring_endpoint_requires_key_and_returns_summary(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "api_key", "test-secret")
+    monkeypatch.setattr(
+        "src.monitoring.load_retrieval_summary",
+        lambda: {"promotion_gate": {"status": "insufficient_data"}},
+    )
+    client = TestClient(app)
+
+    assert client.get("/api/monitoring/retrieval").status_code == 401
+    response = client.get(
+        "/api/monitoring/retrieval",
+        headers={"X-API-Key": "test-secret"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["promotion_gate"]["status"] == "insufficient_data"

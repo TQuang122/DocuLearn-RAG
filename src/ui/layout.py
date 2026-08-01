@@ -3,6 +3,7 @@ from __future__ import annotations
 import gradio as gr
 
 from src.config import settings
+from src.monitoring import add_monitoring_route
 from src.ui.callbacks import (
     ask_chat,
     clear_chat,
@@ -440,4 +441,5 @@ def build_demo() -> gr.Blocks:
             outputs=[flashcard_panel.download],
         )
 
+    add_monitoring_route(demo.app)
     return demo

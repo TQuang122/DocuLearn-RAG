@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, deque
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean
@@ -43,12 +43,28 @@ def telemetry_path() -> Path:
 def write_retrieval_event(
     event: RetrievalTelemetryEvent,
     path: Path | None = None,
+    *,
+    max_bytes: int | None = None,
+    retained_events: int | None = None,
 ) -> None:
     destination = path or telemetry_path()
     destination.parent.mkdir(parents=True, exist_ok=True)
     payload = event.model_dump_json() + "\n"
-    with _WRITE_LOCK, destination.open("a", encoding="utf-8") as handle:
-        _ = handle.write(payload)
+    byte_limit = max_bytes or settings.retrieval_telemetry_max_bytes
+    event_limit = retained_events or settings.retrieval_telemetry_retained_events
+    if byte_limit < 1 or event_limit < 2:
+        raise ValueError("Telemetry retention limits must be positive.")
+    with _WRITE_LOCK:
+        if destination.exists() and destination.stat().st_size >= byte_limit:
+            retained: deque[str] = deque(maxlen=event_limit - 1)
+            with destination.open("r", encoding="utf-8") as source:
+                retained.extend(source)
+            temporary = destination.with_suffix(destination.suffix + ".tmp")
+            with temporary.open("w", encoding="utf-8") as handle:
+                _ = handle.writelines(retained)
+            _ = temporary.replace(destination)
+        with destination.open("a", encoding="utf-8") as handle:
+            _ = handle.write(payload)
 
 
 def read_retrieval_events(

@@ -24,6 +24,9 @@ def test_fusion_retrieval_settings_load_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("RAG_RETRIEVAL_FALLBACK_TO_DENSE", "true")
     monkeypatch.setenv("RAG_RETRIEVAL_TELEMETRY_ENABLED", "true")
     monkeypatch.setenv("RAG_RETRIEVAL_SHADOW_SAMPLE_RATE", "0.1")
+    monkeypatch.setenv("RAG_RETRIEVAL_TELEMETRY_MAX_BYTES", "1048576")
+    monkeypatch.setenv("RAG_RETRIEVAL_TELEMETRY_RETAINED_EVENTS", "1000")
+    monkeypatch.setenv("RAG_EMBEDDING_WARMUP_ENABLED", "true")
 
     configured = Settings(_env_file=None)
 
@@ -34,6 +37,9 @@ def test_fusion_retrieval_settings_load_from_environment(monkeypatch) -> None:
     assert configured.retrieval_fallback_to_dense is True
     assert configured.retrieval_telemetry_enabled is True
     assert configured.retrieval_shadow_sample_rate == 0.1
+    assert configured.retrieval_telemetry_max_bytes == 1048576
+    assert configured.retrieval_telemetry_retained_events == 1000
+    assert configured.embedding_warmup_enabled is True
 
 
 def test_shadow_sampling_requires_telemetry(monkeypatch) -> None:

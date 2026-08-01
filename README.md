@@ -208,6 +208,9 @@ Environment variables use the `RAG_` prefix unless noted otherwise.
 | `RAG_RETRIEVAL_FALLBACK_TO_DENSE` | `true` | Fall back to dense retrieval if fusion fails |
 | `RAG_RETRIEVAL_TELEMETRY_ENABLED` | `false` | Persist privacy-safe retrieval telemetry |
 | `RAG_RETRIEVAL_SHADOW_SAMPLE_RATE` | `0.0` | Fraction of requests compared with the other mode |
+| `RAG_RETRIEVAL_TELEMETRY_MAX_BYTES` | `5242880` | Rotate telemetry after reaching this size |
+| `RAG_RETRIEVAL_TELEMETRY_RETAINED_EVENTS` | `5000` | Recent events retained during rotation |
+| `RAG_EMBEDDING_WARMUP_ENABLED` | `false` | Load and probe the embedding model before launch |
 | `RAG_CHUNK_SIZE` | `1500` | Chunk size |
 | `RAG_CHUNK_OVERLAP` | `200` | Chunk overlap |
 | `RAG_LLM_MODEL` | `gemini-flash-lite-latest` | Gemini model |
@@ -228,6 +231,7 @@ RAG_RETRIEVAL_MODE=fusion
 RAG_RETRIEVAL_FALLBACK_TO_DENSE=true
 RAG_RETRIEVAL_TELEMETRY_ENABLED=true
 RAG_RETRIEVAL_SHADOW_SAMPLE_RATE=0.1
+RAG_EMBEDDING_WARMUP_ENABLED=true
 ```
 
 Events are appended to `exports/retrieval_telemetry.jsonl`. They contain a
@@ -249,6 +253,18 @@ The operational gate is `insufficient_data` until telemetry includes at least
 100 total events and 30 shadow comparisons by default. Retrieval quality still
 requires the annotated product benchmark; agreement between dense and fusion
 is not a relevance label.
+
+The same summary is available from the running FastAPI or Gradio application:
+
+```bash
+curl -H "X-API-Key: $RAG_API_KEY" \
+  http://127.0.0.1:7860/api/monitoring/retrieval
+```
+
+The monitoring route returns `404` when `RAG_API_KEY` is not configured and
+`401` for a missing or invalid key. Telemetry rotates after 5 MiB by default,
+retaining the newest 5,000 events. On Hugging Face, configure `RAG_API_KEY` as
+a Space Secret and the remaining pilot settings as Space Variables.
 
 ## Project layout
 
